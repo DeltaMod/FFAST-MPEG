@@ -220,18 +220,20 @@ class FFAST_MPEGUI(object):
     def Get_Video_Info(self):
         VINFOPROBE = ['ffprobe',
                      '-v error -select_streams v:0 -show_entries',
-                     'stream=width,height,duration,bit_rate,r_frame_rate -of default=noprint_wrappers=1',
+                     'stream=width,height,duration,bit_rate,r_frame_rate,channels -of default=noprint_wrappers=1',
                      '\"'+self.file_paths[0]+'\"']
-        AINFOPROBE = ['ffprobe',
-                     '-v error -select_streams a:0 -show_entries',
-                     'stream=channels -of default=noprint_wrappers=1',
-                     '\"'+self.file_paths[0]+'\"']
+        AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
+                      '\"'+self.file_paths[0]+'\"']
+        print(" ".join(AINFOPROBE))
         resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))+list(filter(None,resulta.communicate()[0].decode().split('\r\n')))
+        RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
+        print(RAW)
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
         self.VideoInfo = {INFO[i][0]:eval(INFO[i][1]) for i in range(len(INFO))}
         self.VideoInfo['format'] = '.'+self.file_paths[0].rsplit('.',1)[-1]
+        self.VideoInfo['audio streams'] = resulta.communicate()[0].decode().count('audio')
+        #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
         print(self.VideoInfo['format'] ) #we add this for convenience, so we can construct names and file-extensions separately
         VideoName = self.file_paths[0].rsplit('.',1)[0]
         self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
@@ -288,10 +290,10 @@ class FFAST_MPEGUI(object):
                 
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
                OUTPUT = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-Mix'+self.VideoInfo['format']+'\"'
-               if self.VideoInfo['channels'] > 1:
+               if self.VideoInfo['audio streams'] > 1:
                    FFASTCMD = ['ffmpeg -i',
                                 '\"'   + self.file_paths[0]  + '\"',
-                                '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['channels'])+'[a]\"',
+                                '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"',
                                 '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
                                 OUTPUT]
                    H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
