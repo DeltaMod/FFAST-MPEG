@@ -218,12 +218,17 @@ class FFAST_MPEGUI(object):
             self.FPCanv.draw()
             self.pipe.kill()
     def Get_Video_Info(self):
-        INFOPROBE = ['ffprobe',
+        VINFOPROBE = ['ffprobe',
                      '-v error -select_streams v:0 -show_entries',
                      'stream=width,height,duration,bit_rate,r_frame_rate -of default=noprint_wrappers=1',
                      '\"'+self.file_paths[0]+'\"']
-        result = subprocess.Popen(" ".join(INFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        RAW = list(filter(None,result.communicate()[0].decode().split('\r\n')))
+        AINFOPROBE = ['ffprobe',
+                     '-v error -select_streams a:0 -show_entries',
+                     'stream=channels -of default=noprint_wrappers=1',
+                     '\"'+self.file_paths[0]+'\"']
+        resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))+list(filter(None,resulta.communicate()[0].decode().split('\r\n')))
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
         self.VideoInfo = {INFO[i][0]:eval(INFO[i][1]) for i in range(len(INFO))}
         self.VideoInfo['format'] = '.'+self.file_paths[0].rsplit('.',1)[-1]
@@ -263,7 +268,13 @@ class FFAST_MPEGUI(object):
                 #p.communicate('mike')[0].rstrip()
             
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
-                print('Not Available Yet')
+                FFASTCMD = ['ffmpeg -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '-ss '+ self.StartTime.get(),
+                            ' -map 0 -vcodec copy -acodec copy',
+                            '-t '+ self.Timestamp,
+                            OUTPUT]
+                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-A'+self.VideoInfo['format']+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-B'+self.VideoInfo['format']+'\"'
@@ -274,8 +285,18 @@ class FFAST_MPEGUI(object):
                             '-ss ' + self.Timestamp, 
                             '-map 0 -c copy ' +OUTPUT2]
                 H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
-                print('Not Available Yet')
+               OUTPUT = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-Mix'+self.VideoInfo['format']+'\"'
+               if self.VideoInfo['channels'] > 1:
+                   FFASTCMD = ['ffmpeg -i',
+                                '\"'   + self.file_paths[0]  + '\"',
+                                '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['channels'])+'[a]\"',
+                                '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
+                                OUTPUT]
+                   H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+               else:
+                   print('You only have one audio channel, ya numpty')
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
