@@ -10,23 +10,38 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
 
 Planned Features Include:
 -Single Video Operations
+
        "Remove Video Footage Before Timetamp" [DONE]
-       "Remove Video Footage After Timetamp",
-       "Split Video at Timestamp",
-       "Merge Multichannel Audio of Video",
+       
+       "Remove Video Footage After Timetamp", [DONE]
+       
+       "Split Video at Timestamp",            [DONE]
+       
+       "Merge Multichannel Audio of Video",   [DONE]
+       
        "Convert Video to Gif",
+       
        "Convert Video to Image Sequence",
+       
        "Convert Gif to Video",
+       
        "Convert Gif to Image Sequence", 
 
 -Multi Video Operation
+
         "Merge Videos",
+        
         "Convert Image Sequence to Video",
+        
         "Convert Image Sequence to Gif"
         
  -General Operations:
- Automatic Naming for Image Sequences
- Automatically deleting original videos after trimming
- Automatically deleting original videos after merging
- Dynamically adding complex filters?
  
+        Automatic Naming for Image Sequences
+ 
+        Automatically deleting original videos after trimming
+ 
+        Automatically deleting original videos after merging
+        
+        Dynamically adding complex filters?
+  
