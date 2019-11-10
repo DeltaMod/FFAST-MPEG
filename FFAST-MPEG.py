@@ -120,7 +120,7 @@ class FFAST_MPEGUI(object):
         self.VCSlider.grid(row=1,column=1, columnspan=3,sticky='nswe')
         
         ##Current Time Editbox
-        self.Timestamp   = 0 
+        self.Timestamp   = GetTime(float(self.VCSlider.get()))[0] 
         self.CurrentTime = tk.StringVar(root); self.CurrentTime.set('00:00:00')
         self.EndTime     = tk.StringVar(root); self.EndTime.set('00:00:00')
         self.StartTime   = tk.StringVar(root); self.StartTime.set('00:00:00')
@@ -187,20 +187,21 @@ class FFAST_MPEGUI(object):
        
         for n in range(len(self.file_paths)):    
             self.SelFiles.insert(n,self.file_paths[n])
-        self.Get_Video_Info()  
+        self.Get_Video_Info() 
+        self.Read_Frame(self)  
         #AspectRatio= self.VideoInfo['height']/self.VideoInfo['width']
         #self.VideoPreview.config(width = self.XDIM , height = self.XDIM*AspectRatio )
     #def SliderRange_Update(self):
     #    print()
     def SliderTime_Update(self,event):
         self.CurrentTime.set(GetTime(float(self.VCSlider.get()))[0])
-        self.Timestamp = float(self.VCSlider.get())
+        self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
         self.Read_Frame(self)
     def Read_Frame(self,event):
-
+        self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
         if len(self.SelFiles.get(0,'end')) !=0:
             RFConmm = ['ffmpeg',
-                        '-ss', str(self.Timestamp),
+                        '-ss', self.Timestamp,
                         '-i','\"'+self.file_paths[0]+'\"',
                         '-ss', '1',
                         '-f', 'image2pipe',
@@ -218,15 +219,21 @@ class FFAST_MPEGUI(object):
             self.pipe.kill()
     def Get_Video_Info(self):
         INFOPROBE = ['ffprobe',
-                     '-v error -select_streams v:0 -show_entries stream=width,height,duration,bit_rate,r_frame_rate -of default=noprint_wrappers=1',
+                     '-v error -select_streams v:0 -show_entries',
+                     'stream=width,height,duration,bit_rate,r_frame_rate -of default=noprint_wrappers=1',
                      '\"'+self.file_paths[0]+'\"']
         result = subprocess.Popen(" ".join(INFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         RAW = list(filter(None,result.communicate()[0].decode().split('\r\n')))
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
         self.VideoInfo = {INFO[i][0]:eval(INFO[i][1]) for i in range(len(INFO))}
+        self.VideoInfo['format'] = '.'+self.file_paths[0].rsplit('.',1)[-1]
+        print(self.VideoInfo['format'] ) #we add this for convenience, so we can construct names and file-extensions separately
+        VideoName = self.file_paths[0].rsplit('.',1)[0]
+        self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
+        print(self.VideoInfo['name'] ) 
         self.VCSlider.config(from_=0, to=self.VideoInfo['duration'])
         self.StartTime.set(GetTime(0)[0])
-        self.Timestamp = self.VideoInfo['duration']
+        self.Timestamp = GetTime(self.VideoInfo['duration'])[0]
         self.EndTime.set(GetTime(self.VideoInfo['duration'])[0])
         self.CurrentTime.set(GetTime(0)[0])
         self.VCSlider.config(resolution = 1/self.VideoInfo['r_frame_rate'])
@@ -241,15 +248,32 @@ class FFAST_MPEGUI(object):
      
     def convert(self):
         if len(self.file_paths) == 1:
+            OUTPUT = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-Trim'+self.VideoInfo['format']+'\"' 
+            print(OUTPUT)
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
-                print('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+str(self.Timestamp)+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"')
-                H = subprocess.Popen('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+str(self.Timestamp)+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"', shell=False)
-                
+                FFASTCMD = ['ffmpeg -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '-ss '+ self.Timestamp,
+                            ' -map 0 -vcodec copy -acodec copy',
+                            OUTPUT]
+                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                #For future reference, if you want to communicate with commandline:
+                # p.stdout.readline().rstrip()
+                #'what is your name'
+                #p.communicate('mike')[0].rstrip()
             
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
-                print('Not Available Yet')
+                OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-A'+self.VideoInfo['format']+'\"' 
+                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-B'+self.VideoInfo['format']+'\"'
+                FFASTCMD = ['ffmpeg -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '-t ' + self.Timestamp,
+                            '-map 0 -c copy ' +OUTPUT1,
+                            '-ss ' + self.Timestamp, 
+                            '-map 0 -c copy ' +OUTPUT2]
+                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
@@ -268,16 +292,8 @@ class FFAST_MPEGUI(object):
                 print('Not Available Yet')
     
             
-            
-#            timerest = 0
-#            while H.poll() == 'None': 
-#                timerest = timerest + 0.1
-#                time.sleep(0.1)
-#            if timerest > 10:
-#                print('Process is being killed prematurely due to time-out')
-#                H.kill()
-#            H.kill()
-    
+                        
+            print('Executed code:\n'+" ".join(FFASTCMD))
     def close(self):
         print('Bye!')
         root.destroy()
