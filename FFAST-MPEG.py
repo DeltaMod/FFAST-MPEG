@@ -2,13 +2,12 @@
 """
 FFAST-MPEG - A quicker than usual way to make gifs, trim videos, split videos and so on!
 """
-import os, sys, subprocess
+import os, subprocess
 import matplotlib
 matplotlib.use('TKagg') 
 import tkinter as tk
 from tkinter import filedialog as fd
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 import numpy as np
@@ -34,7 +33,7 @@ FOP = [ "Remove Video Footage Before Timetamp",
         "Convert Video to Gif",
         "Convert Video to Image Sequence",
         "Convert Gif to Video",
-        "Convert Gif to Image Sequence" 
+        "Convert Gif to Image Sequence", 
         "Merge Videos",
         "Convert Image Sequence to Video",
         "Convert Image Sequence to Gif",
@@ -84,7 +83,6 @@ class FFAST_MPEGUI(object):
         self.FPFrame.grid(row = 0, column = 0, rowspan=2,  sticky='nwes')
         
         self.FPrev = plt.figure(1)
-        self.FPrev.add_subplot(111)
         self.FPCanv = FigureCanvasTkAgg(self.FPrev,master=self.FPFrame)  # A tk.DrawingArea.
         self.FPCanv.draw()
         self.FPCanv.get_tk_widget().grid(column=0,row=0)
@@ -158,7 +156,7 @@ class FFAST_MPEGUI(object):
         # link function to change dropdown
         def FFMPChange(*args):
             VSAV['FFMPEG Mode'] = int(self.FFSel.get()[0])
-            print('Now using: ', self.DDFFM.get()[0])
+            print('Now using: ', FOP[int(self.FFSel.get()[0])])
         self.FFSel.trace('w',FFMPChange)
         
         #Generating the Listbox that will contain a file listing of all selected files
@@ -247,6 +245,38 @@ class FFAST_MPEGUI(object):
                 print('ffmpeg -i \"' +self.file_paths[0]+'\" -ss'+self.CurrentTime.get()+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"')
                 H = subprocess.Popen('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+self.CurrentTime.get()+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"', shell=False)
             
+            
+            if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[4]: #Convert Video to Gif
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[6]: #Convert Gif to Video
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[7]: #Convert Gif to Image Sequence
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[8]: #Merge Videos
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
+                print('Not Available Yet')
+            if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
+                print('Not Available Yet')
+    
+            
+            
+            timerest = 0
+            while H.poll() == 'None': 
+                timerest = timerest + 0.1
+                time.sleep(0.1)
+            if timerest > 10:
+                print('Process is being killed prematurely due to time-out')
+                H.kill()
+            H.kill()
     
     def close(self):
         print('Bye!')
