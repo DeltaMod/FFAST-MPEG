@@ -242,9 +242,9 @@ class FFAST_MPEGUI(object):
     def convert(self):
         if len(self.file_paths) == 1:
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
-                print('ffmpeg -i \"' +self.file_paths[0]+'\" -ss'+self.CurrentTime.get()+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"')
-                H = subprocess.Popen('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+self.CurrentTime.get()+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"', shell=False)
-            
+                print('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+str(self.Timestamp)+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"')
+                H = subprocess.Popen('ffmpeg -i \"' +self.file_paths[0]+'\" -ss '+str(self.Timestamp)+' -map 0 -vcodec copy -acodec copy \"'+self.save_location[0]+'\\output.mp4\"', shell=False)
+                
             
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
                 print('Not Available Yet')
@@ -269,14 +269,14 @@ class FFAST_MPEGUI(object):
     
             
             
-            timerest = 0
-            while H.poll() == 'None': 
-                timerest = timerest + 0.1
-                time.sleep(0.1)
-            if timerest > 10:
-                print('Process is being killed prematurely due to time-out')
-                H.kill()
-            H.kill()
+#            timerest = 0
+#            while H.poll() == 'None': 
+#                timerest = timerest + 0.1
+#                time.sleep(0.1)
+#            if timerest > 10:
+#                print('Process is being killed prematurely due to time-out')
+#                H.kill()
+#            H.kill()
     
     def close(self):
         print('Bye!')
