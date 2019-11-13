@@ -19,7 +19,7 @@ Planned Features Include:
        
        "Merge Multichannel Audio of Video",   [DONE]
        
-       "Convert Video to Gif",
+       "Convert Video to Gif", [1/2Done] (needs to wait for subprocess to complete)
        
        "Convert Video to Image Sequence",
        
