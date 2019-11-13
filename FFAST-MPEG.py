@@ -298,9 +298,25 @@ class FFAST_MPEGUI(object):
                                 OUTPUT]
                    H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                else:
-                   print('You only have one audio channel, ya numpty')
+                   print('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
-                print('Not Available Yet')
+                #This is a two step process - First, we generate a palette:
+                OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"' 
+                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-GIF.gif'+'\"'
+                FFASTCMDT = (['ffmpeg -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen\"',
+                             OUTPUT1],
+                            ['ffmpeg -i',
+                             '\"'   + self.file_paths[0]  + '\"',
+                             '-i',OUTPUT1,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
+                             OUTPUT2])
+                
+                H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
+                time.sleep(1)
+                H.kill()
+                H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                FFASTCMD = FFASTCMDT[0]+'\n'+FFASTCMDT[1]
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[6]: #Convert Gif to Video
