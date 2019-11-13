@@ -9,7 +9,7 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
 **Currently doing**
-  * Implementnig Video to Gif conversion. Since we need to create a palette before we create the gif, this is a two step operation. Thus, I will need to figure out how to check if a subprocess has completed before movoing onto the next step.
+  * Implementnig Video to Gif conversion. Since we need to create a palette before we create the gif, this is a two step operation. Thus, I will need to figure out how to check if a subprocess has completed before moving onto the next step.
   
 **Planned Features**
 
