@@ -11,6 +11,8 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
 **Currently doing**
   * Implementnig Video to Gif conversion. Since we need to create a palette before we create the gif, this is a two step operation. Thus, I will need to figure out how to check if a subprocess has completed before moving onto the next step.
   
+  **I was unable to find a good method to intercept the CMD output, since using H.communicate() will kill the command. Thus, I will instead have python intercept when the program automatically names the "OUTPUT", and see if it matches a file. If it does, the user will be given the option to either manually rename the file, overwrite the current one or stop the process.** 
+  
 **Planned Features**
 
  * Single Video Operations
