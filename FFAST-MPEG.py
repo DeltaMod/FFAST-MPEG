@@ -284,7 +284,10 @@ class FFAST_MPEGUI(object):
             self.FileExist = False
             self.convert()
     def PopupDestroy(self):
-        self.QuestFrame.destroy()
+        try:
+            self.QuestFrame.destroy()
+        except:
+            None
     def CheckNameAvailable(self,*args):
         self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
         if self.FileExist == False:
@@ -302,6 +305,8 @@ class FFAST_MPEGUI(object):
     def convert(self):
         self.PopupDestroy()
         self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format']+'\"'
+        if self.FFSel.get() in [FOP[4],FOP[10]]:
+            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.gif'+'\"'
         if len(self.file_paths) == 1:
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
                 FFASTCMD = ['ffmpeg -y -i',
@@ -313,10 +318,6 @@ class FFAST_MPEGUI(object):
                 print('oi, this is the output you want:')
                 print(H.stderr)
                 
-                #For future reference, if you want to communicate with commandline:
-                # p.stdout.readline().rstrip()
-                #'what is your name'
-                #p.communicate('mike')[0].rstrip()
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
                 FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
@@ -347,6 +348,8 @@ class FFAST_MPEGUI(object):
                    
                else:
                    print('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
+                   E = subprocess.Popen('echo You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
+                   E.kill()
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
                 #This is a two step process - First, we generate a palette:
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"' 
@@ -360,9 +363,16 @@ class FFAST_MPEGUI(object):
                              self.OUTPUT])
                 
                 H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
-                time.sleep(1)
+                while H.poll() is None:
+                    print('Palette is being generated')
+                    time.sleep(1)
                 H.kill()
                 H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                while H.poll() is None:
+                    print('Gif is being generated')
+                    time.sleep(1)
+                os.remove(self.save_location[0]+'\\'+'Palette.png')
+                
                 FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
                 print('Not Available Yet')
