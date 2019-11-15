@@ -36,11 +36,21 @@ FOP = [ "Remove Video Footage Before Timetamp",
         "Convert Gif to Image Sequence", 
         "Merge Videos",
         "Convert Image Sequence to Video",
-        "Convert Image Sequence to Gif",
-    ]
+        "Convert Image Sequence to Gif"]
 FOP = [str(n)+' - '+FOP[n] for n in range(len(FOP))]
 FOPWidth = len(max(FOP, key=len))
 VSAV = {'FFMPEG Mode':0}
+FOPN = {FOP[0]  :'TrimS',
+        FOP[1]  :'TrimE',
+        FOP[2]  :'Split',
+        FOP[3]  :'MCM',
+        FOP[4]  :'V2Gif',
+        FOP[5]  :'V2Seq',
+        FOP[6]  :'Gif2V',
+        FOP[7]  :'Gif2Seq',
+        FOP[8]  :'Merge',
+        FOP[9]  :'Seq2V',
+        FOP[10] :'Seq2Gif' } #This is to automatically name output properly!
 #Define Colours to use for certain components
 rootBG      = 'bisque'
 frameBG     = 'moccasin'
@@ -69,8 +79,9 @@ class FFAST_MPEGUI(object):
         "Seriously, I made this for me - but might as well release it for free",
         "Please, if you have some great ideas for additions/changes...",
         "fork this repository, and make them"]
-    def __init__(self, master):
+    def __init__(self, master):    
         self.master = master 
+        
         master.title('FFASTMPEG')
         self.XDIM = int(1600/2)
         VIDH = 100
@@ -78,6 +89,7 @@ class FFAST_MPEGUI(object):
         BDW  = 3
         root.geometry('{}x{}'.format(2*self.XDIM,self.YDIM+VIDH))
         root.config(bg=rootBG)
+        
         #Creating Frame Preview Canvas
         self.FPFrame = tk.Frame(root, bg=rootBG, width=self.XDIM, height=self.YDIM, padx=10, pady=10, bd=BDW, relief='flat') # , 
         self.FPFrame.grid(row = 0, column = 0, rowspan=2,  sticky='nwes')
@@ -169,7 +181,7 @@ class FFAST_MPEGUI(object):
         self.close_button.grid(row = 5,column = 5,sticky='nw')
         
         #Convert Button
-        self.Convert_Button = tk.Button(self.AddCanv, text='Convert', command=self.convert)
+        self.Convert_Button = tk.Button(self.AddCanv, text='Convert', command=self.Check_File_Exist)
         self.Convert_Button.grid(row = 4,column = 5,sticky='nwse')
     
     
@@ -225,8 +237,8 @@ class FFAST_MPEGUI(object):
         AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
                       '\"'+self.file_paths[0]+'\"']
         print(" ".join(AINFOPROBE))
-        resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
         print(RAW)
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
@@ -252,35 +264,71 @@ class FFAST_MPEGUI(object):
             self.YDIM = int(self.XDIM*9/32)
             root.geometry('{}x{}'.format(self.XDIM,self.YDIM))
      
-     
+    def Check_File_Exist(self):
+        self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
+        self.OUTPUTNAME.trace_add('write',self.CheckNameAvailable)
+        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        print( self.FileExist)
+        if self.FileExist == True:
+            self.QuestFrame = tk.Toplevel(root)
+            self.QuestFrame.focus()
+            self.QuestFrame.grab_set()
+            self.NameEntry   = tk.Entry(self.QuestFrame,textvariable=self.OUTPUTNAME,bg='coral',width=(10+len(self.OUTPUTNAME.get())))
+            self.NameEntry.grid(row=0,column=0,columnspan=3,sticky='nsew')
+            self.Overwrite   = tk.Button(self.QuestFrame,text='Overwrite',command=self.convert).grid(row=1,column=0,sticky='nsew',padx=5,pady=5)
+            self.NameChange  = tk.Button(self.QuestFrame,text='Use New Name',state='disabled',command=self.CheckIfConvert)
+            self.NameChange.grid(row=1,column=1,sticky='nsew',padx=5,pady=5)
+            self.Cancel      = tk.Button(self.QuestFrame,text='Cancel',command=self.PopupDestroy).grid(row=1,column=2,padx=5,pady=5,sticky='nsew')
+            
+        else:
+            self.FileExist = False
+            self.convert()
+    def PopupDestroy(self):
+        self.QuestFrame.destroy()
+    def CheckNameAvailable(self,*args):
+        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        if self.FileExist == False:
+            self.NameEntry.config(bg='lightgreen')
+            self.NameChange.config(state='normal')
+        if self.FileExist == True:
+            self.NameEntry.config(bg='coral')
+            self.NameChange.config(state='disabled')
+    def CheckIfConvert(self):
+        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        if self.FileExist == False:
+            self.convert()
+            
+     #   YorRename = tk.simpledialog.askstring()
     def convert(self):
+        self.PopupDestroy()
+        self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format']+'\"'
         if len(self.file_paths) == 1:
-            OUTPUT = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-Trim'+self.VideoInfo['format']+'\"' 
-            print(OUTPUT)
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
-                FFASTCMD = ['ffmpeg -i',
+                FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-ss '+ self.Timestamp,
-                            ' -map 0 -vcodec copy -acodec copy',
-                            OUTPUT]
-                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                            '-map 0 -vcodec copy -acodec copy',
+                            self.OUTPUT]
+                H = subprocess.Popen(" ".join(FFASTCMD),stdin = subprocess.PIPE,bufsize=-1, shell=False)
+                print('oi, this is the output you want:')
+                print(H.stderr)
+                
                 #For future reference, if you want to communicate with commandline:
                 # p.stdout.readline().rstrip()
                 #'what is your name'
                 #p.communicate('mike')[0].rstrip()
-            
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
-                FFASTCMD = ['ffmpeg -i',
+                FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-ss '+ self.StartTime.get(),
-                            ' -map 0 -vcodec copy -acodec copy',
+                            '-map 0 -vcodec copy -acodec copy',
                             '-t '+ self.Timestamp,
-                            OUTPUT]
+                            self.OUTPUT]
                 H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-A'+self.VideoInfo['format']+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-B'+self.VideoInfo['format']+'\"'
-                FFASTCMD = ['ffmpeg -i',
+                FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-t ' + self.Timestamp,
                             '-map 0 -c copy ' +OUTPUT1,
@@ -289,34 +337,33 @@ class FFAST_MPEGUI(object):
                 H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                 
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
-               OUTPUT = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-Mix'+self.VideoInfo['format']+'\"'
                if self.VideoInfo['audio streams'] > 1:
-                   FFASTCMD = ['ffmpeg -i',
+                   FFASTCMD = ['ffmpeg -y -i',
                                 '\"'   + self.file_paths[0]  + '\"',
                                 '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"',
                                 '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
-                                OUTPUT]
+                                self.OUTPUT]
                    H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                   
                else:
                    print('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
                 #This is a two step process - First, we generate a palette:
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"' 
-                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-GIF.gif'+'\"'
-                FFASTCMDT = (['ffmpeg -i',
+                FFASTCMDT = (['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen\"',
                              OUTPUT1],
-                            ['ffmpeg -i',
+                            ['ffmpeg -y -i',
                              '\"'   + self.file_paths[0]  + '\"',
                              '-i',OUTPUT1,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
-                             OUTPUT2])
+                             self.OUTPUT])
                 
                 H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
                 time.sleep(1)
                 H.kill()
                 H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
-                FFASTCMD = FFASTCMDT[0]+'\n'+FFASTCMDT[1]
+                FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[6]: #Convert Gif to Video
