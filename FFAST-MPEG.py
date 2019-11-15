@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 FFAST-MPEG - A quicker than usual way to make gifs, trim videos, split videos and so on!
+
+Current Version: pre-alpha v0.6  
 """
 import os, subprocess
 import matplotlib
@@ -242,11 +244,17 @@ class FFAST_MPEGUI(object):
         RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
         print(RAW)
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
-        self.VideoInfo = {INFO[i][0]:eval(INFO[i][1]) for i in range(len(INFO))}
-        self.VideoInfo['format'] = '.'+self.file_paths[0].rsplit('.',1)[-1]
+        self.VideoInfo ={'format':'.'+self.file_paths[0].rsplit('.',1)[-1]}
+        for i in range(len(INFO)):
+            try:
+                self.VideoInfo[INFO[i][0]] = eval(INFO[i][1])
+                print(eval(INFO[i][1]))
+            except NameError:
+                self.VideoInfo[INFO[i][0]] = INFO[i][1]
         self.VideoInfo['audio streams'] = resulta.communicate()[0].decode().count('audio')
         #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
         print(self.VideoInfo['format'] ) #we add this for convenience, so we can construct names and file-extensions separately
+        print(self.VideoInfo)
         VideoName = self.file_paths[0].rsplit('.',1)[0]
         self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
         print(self.VideoInfo['name'] ) 
@@ -314,9 +322,9 @@ class FFAST_MPEGUI(object):
                             '-ss '+ self.Timestamp,
                             '-map 0 -vcodec copy -acodec copy',
                             self.OUTPUT]
-                H = subprocess.Popen(" ".join(FFASTCMD),stdin = subprocess.PIPE,bufsize=-1, shell=False)
+                self.H = subprocess.Popen(" ".join(FFASTCMD),stdin = subprocess.PIPE,bufsize=-1, shell=False)
                 print('oi, this is the output you want:')
-                print(H.stderr)
+                print(self.H.stderr)
                 
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
                 FFASTCMD = ['ffmpeg -y -i',
@@ -325,7 +333,7 @@ class FFAST_MPEGUI(object):
                             '-map 0 -vcodec copy -acodec copy',
                             '-t '+ self.Timestamp,
                             self.OUTPUT]
-                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-A'+self.VideoInfo['format']+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-B'+self.VideoInfo['format']+'\"'
@@ -335,7 +343,7 @@ class FFAST_MPEGUI(object):
                             '-map 0 -c copy ' +OUTPUT1,
                             '-ss ' + self.Timestamp, 
                             '-map 0 -c copy ' +OUTPUT2]
-                H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                 
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
                if self.VideoInfo['audio streams'] > 1:
@@ -344,7 +352,7 @@ class FFAST_MPEGUI(object):
                                 '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"',
                                 '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
                                 self.OUTPUT]
-                   H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                   self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                    
                else:
                    print('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
@@ -362,24 +370,36 @@ class FFAST_MPEGUI(object):
                              '-i',OUTPUT1,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
                              self.OUTPUT])
                 
-                H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
-                while H.poll() is None:
-                    print('Palette is being generated')
-                    time.sleep(1)
-                H.kill()
-                H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
-                while H.poll() is None:
-                    print('Gif is being generated')
-                    time.sleep(1)
+                self.H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
+                self.PollKill(self.H,'Palette is being generated')
+                self.H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                self.PollKill(self.H,'Gif is being generated')
                 os.remove(self.save_location[0]+'\\'+'Palette.png')
                 
                 FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
-                print('Not Available Yet')
+                FFASTCMD = ['ffmpeg -y -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
+                #'-vf \"select=eq(pict_type\,I)\" -vsync vfr',
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Generating Image Sequence')
+                
             if self.FFSel.get() == FOP[6]: #Convert Gif to Video
-                print('Not Available Yet')
+                FFASTCMD = ['ffmpeg -y -f gif -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            self.OUTPUT]
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Generating Video From Gif')
+                
             if self.FFSel.get() == FOP[7]: #Convert Gif to Image Sequence
-                print('Not Available Yet')
+                FFASTCMD = ['ffmpeg -y -i',
+                            '\"'   + self.file_paths[0]  + '\"',
+                            '-vsync 0',
+                            '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Generating Video From Gif')
+                
             if self.FFSel.get() == FOP[8]: #Merge Videos
                 print('Not Available Yet')
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
@@ -393,6 +413,12 @@ class FFAST_MPEGUI(object):
     def close(self):
         print('Bye!')
         root.destroy()
+        
+    def PollKill(self,Process,Message):
+        while Process.poll() is None:
+                    print(Message)
+                    time.sleep(1)
+        Process.kill()
 
 root = tk.Tk()
 
