@@ -9,9 +9,9 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
 **Currently doing**
-  * Implementnig Video to Gif conversion. Since we need to create a palette before we create the gif, this is a two step operation. Thus, I will need to figure out how to check if a subprocess has completed before moving onto the next step.
+  * Implementing the last of the single video/gif operations. However, I might make a general option appear that simply lets you choose the file format that you wish to use. 
   
-  **I was unable to find a good method to intercept the CMD output, since using H.communicate() will kill the command. Thus, I will instead have python intercept when the program automatically names the "OUTPUT", and see if it matches a file. If it does, the user will be given the option to either manually rename the file, overwrite the current one or stop the process.** 
+
   
 **Planned Features**
 
@@ -25,13 +25,13 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
        
        - "Merge Multichannel Audio of Video",   [DONE]
        
-       - "Convert Video to Gif", [1/2Done] (needs to wait for subprocess to complete)
+       - "Convert Video to Gif",                [DONE]      
        
-       - "Convert Video to Image Sequence",
+       - "Convert Video to Image Sequence",     [DONE]
        
-       - "Convert Gif to Video",
+       - "Convert Gif to Video",                [DONE] 
        
-       - "Convert Gif to Image Sequence", 
+       - "Convert Gif to Image Sequence",       [DONE]
 
 * Multi Video Operation
 
@@ -54,4 +54,6 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
         - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc)
         
         - Adding image sequence to gif/video parameters (like encoding quality, framerate, interpolation quality, etc.
+        
+        - Adding overwrite/rename/cancel options when an automatically generated name is matching one in the same directory [DONE]
   
