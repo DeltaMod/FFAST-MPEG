@@ -315,6 +315,8 @@ class FFAST_MPEGUI(object):
         self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format']+'\"'
         if self.FFSel.get() in [FOP[4],FOP[10]]:
             self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.gif'+'\"'
+        if self.FFSel.get() in [FOP[9]]:
+            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.mp4'+'\"'
         if len(self.file_paths) == 1:
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
                 FFASTCMD = ['ffmpeg -y -i',
@@ -398,21 +400,46 @@ class FFAST_MPEGUI(object):
                             '-vsync 0',
                             '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
                 self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
-                self.PollKill(self.H,'Generating Video From Gif')
+                self.PollKill(self.H,'Converting Gif to Image Sequence')
                 
+        if len(self.file_paths) > 1:
             if self.FFSel.get() == FOP[8]: #Merge Videos
-                print('Not Available Yet')
+                self.MergeList()
+                FFASTCMD = ['ffmpeg -y -f',
+                            'concat -safe 0 -i',
+                            '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
+                            '-c copy', 
+                            self.OUTPUT]
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Merging Videos From Mergelist')
+                os.remove(self.MListOUT)
+                
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
-                print('Not Available Yet')
+                self.MergeList()
+                FFASTCMD = ['ffmpeg -y -r 1/30 -f concat -safe 0 -i',
+                            '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
+                            '-c:v libx264 -r 25 -pix_fmt yuv420p -t 15', 
+                            self.OUTPUT]
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Merging Videos From Mergelist')
+               # os.remove(self.MListOUT)
             if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
                 print('Not Available Yet')
     
             
                         
             print('Executed code:\n'+" ".join(FFASTCMD))
+    
     def close(self):
         print('Bye!')
         root.destroy()
+        
+    def MergeList(self):
+        self.MListOUT = self.save_location[0]+'\\'+'MergeList.txt'
+        FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n' for n in range(len(self.SelFiles.get(0,'end')))] 
+        MergeList = open(self.MListOUT, "w")
+        MergeList.write("".join(FList))
+        MergeList.close()
         
     def PollKill(self,Process,Message):
         while Process.poll() is None:
