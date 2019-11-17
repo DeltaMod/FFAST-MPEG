@@ -416,21 +416,42 @@ class FFAST_MPEGUI(object):
                 
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
                 self.MergeList()
-                FFASTCMD = ['ffmpeg -f concat -safe 0 -i',
+                FFASTCMD = ['ffmpeg -y -f concat -safe 0 -i',
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-vcodec libx264 -b:v 800k', 
                             self.OUTPUT]
                 self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
-                self.PollKill(self.H,'Merging Videos From Mergelist')
-               # os.remove(self.MListOUT)
+                self.PollKill(self.H,'Merging Video From Mergelist')
+                os.remove(self.MListOUT)
             if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
                 self.MergeList()
-                FFASTCMD = ['ffmpeg -f concat -safe 0 -i',
-                            '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
-                            self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
-                self.PollKill(self.H,'Merging Videos From Mergelist')
-    
+                #ffmpeg -i cropped/%02d.png -vf palettegen palette.png
+                OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palettevid.mp4'+'\"' 
+                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'  
+                #This is incredibly stupid, we have to generate a palette from a converted video - AND THEN generate the gif using said palette
+                FFASTCMDT = (['ffmpeg -y -f concat -safe 0 -i',
+                              '\"'+self.MListOUT+'\"',
+                              '-vcodec libx264 -b:v 800k', 
+                              OUTPUT1], #make palettevid
+                            ['ffmpeg -y -i',
+                              OUTPUT1,
+                             '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=reserve_transparent=1\"',
+                              OUTPUT2], #make palette from palette video
+                            ['ffmpeg -f concat -safe 0 -i',
+                             '\"'  + self.MListOUT  + '\"',
+                             '-i',OUTPUT2,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
+                             self.OUTPUT]) #use palette to make gif
+                self.H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
+                self.PollKill(self.H,'Palette video is being generated')
+                self.H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                self.PollKill(self.H,'Palette is being generated')
+                self.H = subprocess.Popen(" ".join(FFASTCMDT[2]), shell=False)
+                self.PollKill(self.H,'Gif is being generated')
+                
+                FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]+FFASTCMDT[2]
+                os.remove(self.save_location[0]+'\\'+'Palette.png')
+                os.remove(self.save_location[0]+'\\'+'Palettevideo.mp4')
+                os.remove(self.MListOUT)
             print('Executed code:\n'+" ".join(FFASTCMD))
     
     def close(self):
