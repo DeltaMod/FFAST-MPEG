@@ -15,7 +15,7 @@ from matplotlib.backends.backend_tkagg import (
 import numpy as np
 import time
 
-plt.rcParams['figure.dpi']         = 90
+plt.rcParams['figure.dpi']         = 20
 plt.rcParams['axes.grid']          = False
 plt.rcParams['axes.axisbelow']     = False
 plt.rcParams['axes.spines.left']   = False
@@ -72,6 +72,11 @@ def GetTime(rawtime):
         SecTime = time.strftime("%H:%M:%S", time.gmtime(seconds))
         RealTime = SecTime+str(decimals)[1:5]
         return(RealTime,rawtime)
+
+def SetTime(ST):
+        ST = ST.replace(':','.').split('.')
+        TIME = int(ST[0])*60**2 + int(ST[1])*60 + int(ST[2]) + eval('0.'+ST[3])
+        return(TIME)
         
 class FFAST_MPEGUI(object):
     LABEL_TEXT = [
@@ -93,13 +98,14 @@ class FFAST_MPEGUI(object):
         root.config(bg=rootBG)
         
         #Creating Frame Preview Canvas
-        self.FPFrame = tk.Frame(root, bg=rootBG, width=self.XDIM, height=self.YDIM, padx=10, pady=10, bd=BDW, relief='flat') # , 
-        self.FPFrame.grid(row = 0, column = 0, rowspan=2,  sticky='nwes')
+        #self.FPFrame = tk.Frame(root, bg=rootBG, width=self.XDIM, height=self.YDIM, padx=10, pady=10, bd=BDW, relief='flat') # , 
+        #self.FPFrame.grid(row = 0, column = 0, rowspan=2,  sticky='nwes')
         
         self.FPrev = plt.figure(1)
-        self.FPCanv = FigureCanvasTkAgg(self.FPrev,master=self.FPFrame)  # A tk.DrawingArea.
+        self.FPrev.subplots_adjust(bottom=0, top=1, left=0, right=1)
+        self.FPCanv = FigureCanvasTkAgg(self.FPrev,master=root)  # A tk.DrawingArea.
         self.FPCanv.draw()
-        self.FPCanv.get_tk_widget().grid(column=0,row=0)
+        self.FPCanv.get_tk_widget().grid(column=0,row=0,rowspan=2,sticky='nwes',padx=10,pady=10)
         #self.toolbar = NavigationToolbar2Tk(self.FPCanv, root)
         #self.toolbar.update()
         #self.toolbar.get_tk_widget().grid(row=1,column=0)
@@ -111,12 +117,12 @@ class FFAST_MPEGUI(object):
         
         #Creating FFMPEG Commands Frame
         self.FFCanv = tk.Frame(root, bg=rootBG, width=self.XDIM,              padx=10, pady=10, bd=BDW, relief='flat')
-        self.FFCanv.grid(row = 0, column = 1,sticky='nswe')
+        self.FFCanv.grid(row = 0, column = 1,sticky='nwe')
         self.FFCanv.bind('<Configure>',self.MaintainAspect)
         
         #Creating Additional Commands Frame
         self.AddCanv = tk.Frame(root,bg=frameBG,width=self.XDIM,             padx=10, pady=10, bd=BDW, relief='groove')
-        self.AddCanv.grid(row = 1, column = 1, rowspan = 2, sticky='nswe')
+        self.AddCanv.grid(row = 1, column = 1, rowspan = 2, sticky='snwe')
         
         #Setting Weights of all root relevant columms to be 1
         for j in range(3):
@@ -129,9 +135,13 @@ class FFAST_MPEGUI(object):
         #self.VideoPreview.grid(row=0,column=0,sticky='nw')
         
         #%% Video Viewer UI Frame
+        for j in range(1,8):
+            self.VCCanv.grid_columnconfigure(j, weight=1)
+        for i in range(1):
+            self.VCCanv.grid_rowconfigure(i, weight=1)
         ##Frame Slider 
-        self.VCSlider = tk.Scale(self.VCCanv,from_=0, to=1,orient='horizontal',command = self.SliderTime_Update,length = 300)
-        self.VCSlider.grid(row=1,column=1, columnspan=3,sticky='nswe')
+        self.VCSlider = tk.Scale(self.VCCanv,from_=0, to=1,orient='horizontal',length=None,command = self.SliderTime_Update)
+        self.VCSlider.grid(row=1,column=1, columnspan=7,sticky='nswe')
         
         ##Current Time Editbox
         self.Timestamp   = GetTime(float(self.VCSlider.get()))[0] 
@@ -139,18 +149,20 @@ class FFAST_MPEGUI(object):
         self.EndTime     = tk.StringVar(root); self.EndTime.set('00:00:00')
         self.StartTime   = tk.StringVar(root); self.StartTime.set('00:00:00')
         
-        self.VCTimeEdit = tk.Entry(self.VCCanv,textvariable=self.CurrentTime)
-        self.VCTimeEdit.grid(row=0,column=2)
-        self.VCTimeEdit.bind('<Enter>',self.Read_Frame)
+        self.VCTimeEdit = tk.Entry(self.VCCanv,justify='center',textvariable=self.CurrentTime)
+        self.VCTimeEdit.grid(row=0,column=4,sticky='s')
+        self.VCTimeEdit.bind('<Return>',self.TimeEditToSlider)
 
         ##Left Time 
-        self.VCLT = tk.Label(self.VCCanv, textvariable=self.StartTime ,relief=LabelRelief,bg=LabelBG).grid(row = 1, column = 0,sticky='nswe')
+        self.VCLT = tk.Label(self.VCCanv, textvariable=self.StartTime ,relief=LabelRelief,anchor='w',bg=LabelBG)
+        self.VCLT.grid(row = 1, column = 0,sticky='nsw')
         
         ##Right Time
-        self.VCRT = tk.Label(self.VCCanv, textvariable=self.EndTime ,relief=LabelRelief,bg=LabelBG).grid(row = 1, column = 4,sticky='nswe')
-        
+        self.VCRT = tk.Label(self.VCCanv, textvariable=self.EndTime ,relief=LabelRelief,anchor='e',bg=LabelBG)
+        self.VCRT.grid(row = 1, column = 8,sticky='nse')
         #%% FFMPEG Control Frame                
         ##Select Files Button
+        
         tk.Label(self.FFCanv, text="Select One (or multiple) Files",relief=LabelRelief,bg=LabelBG).grid(row = 2, column = 0,sticky='nswe')
         
         self.Select_Files_Button = tk.Button(self.FFCanv, text='Click Here to Select Files', command=self.Select_Files)
@@ -170,7 +182,7 @@ class FFAST_MPEGUI(object):
         # link function to change dropdown
         def FFMPChange(*args):
             VSAV['FFMPEG Mode'] = int(self.FFSel.get()[0])
-            print('Now using: ', FOP[int(self.FFSel.get()[0])])
+            self.Print_Console('Now using: '+ FOP[int(self.FFSel.get()[0])])
         self.FFSel.trace('w',FFMPChange)
         
         #Generating the Listbox that will contain a file listing of all selected files
@@ -178,9 +190,15 @@ class FFAST_MPEGUI(object):
         self.SelFiles.grid(row=1,column=1,rowspan=3,sticky='nsew')
         tk.Label(self.FFCanv, text="List of Selected Files",relief=LabelRelief,bg=LabelBG).grid(row = 0, column = 1,sticky='nswe')
         
+        # Generating the text widget that will contain all console entries
+        tk.Label(self.FFCanv, text="Console Output",relief=LabelRelief,bg=LabelBG).grid(row = 4, column = 1,sticky='nwse')
+        self.ConsoleOUT = tk.Text(self.FFCanv,width = 5,height=10,font=('CMU Serif', 8))
+        self.ConsoleOUT.grid(row=5,column=1,rowspan=1,sticky='nswe')
+       
+        
         #Close Button
         self.close_button = tk.Button(self.AddCanv, text='Close', command=self.close)
-        self.close_button.grid(row = 5,column = 5,sticky='nw')
+        self.close_button.grid(row = 5,column = 5,sticky='nwes')
         
         #Convert Button
         self.Convert_Button = tk.Button(self.AddCanv, text='Convert', command=self.Check_File_Exist)
@@ -194,19 +212,41 @@ class FFAST_MPEGUI(object):
         file_paths = [str(self.file_paths[n]) for n in range(len(self.file_paths))]
         self.file_paths = [os.path.abspath(file_paths[n]) for n in range(len(file_paths))]
         self.save_location = [os.path.dirname(os.path.abspath(file_paths[n])) for n in range(len(file_paths))]
-        print(self.file_paths)
-        print(self.save_location)
-        print('Loaded in:\n'+''.join(self.file_paths))
+        self.Print_Console(self.file_paths)
+        self.Print_Console(self.save_location)
+        self.Print_Console('Loaded in:\n'+''.join(self.file_paths))
         
        
         for n in range(len(self.file_paths)):    
             self.SelFiles.insert(n,self.file_paths[n])
         self.Get_Video_Info() 
-        self.Read_Frame(self)  
+        self.Read_Frame(self)
+    def Print_Console(self,text):
+        if type(text) == list:
+            PRINT = [str(text[n]) for n in range(len(text))]
+            PRINT = "\n".join(PRINT)
+        else:
+            PRINT = str(text)
+        self.ConsoleOUT.insert('end','\n'+PRINT)
+        self.ConsoleOUT.see('end')
         #AspectRatio= self.VideoInfo['height']/self.VideoInfo['width']
         #self.VideoPreview.config(width = self.XDIM , height = self.XDIM*AspectRatio )
-    #def SliderRange_Update(self):
-    #    print()
+    def TimeEditToSlider(self,*args):
+        OGT = GetTime(float(self.VCSlider.get()))[0]
+        TIN = self.CurrentTime.get()
+        if TIN.count(':') == 2 and TIN.count('.') == 1:
+                TO = SetTime(TIN)
+                if round(TO,3) in np.arange(round(0.0,3),round(self.VideoInfo['duration'],3),0.001):
+                    self.VCSlider.set(TO) 
+                else:
+                    self.master.focus()
+                    self.CurrentTime.set(OGT)
+                    self.Print_Console('Please select a time in the correct range')
+        else:
+            self.master.focus()
+            self.CurrentTime.set(OGT)
+            self.Print_Console('Use a valid format please')
+        
     def SliderTime_Update(self,event):
         self.CurrentTime.set(GetTime(float(self.VCSlider.get()))[0])
         self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
@@ -222,13 +262,12 @@ class FFAST_MPEGUI(object):
                         '-pix_fmt', 'rgb24',
                         '-vcodec','rawvideo', '-']
             self.pipe = subprocess.Popen(" ".join(RFConmm), stdout=subprocess.PIPE,stderr=subprocess.PIPE, bufsize=10**8)
-            
             # read width*height*3 bytes (= 1 frame)
             raw_image = self.pipe.stdout.read(self.VideoInfo['height']*self.VideoInfo['width']*3)
             # transform the byte read into a numpy array 
             mpimage =  np.frombuffer(raw_image, dtype='uint8')
             mpimage = mpimage.reshape((self.VideoInfo['height'],self.VideoInfo['width'],3))
-            self.FPrev = plt.imshow(mpimage)
+            self.FPrev = plt.imshow(mpimage,aspect='auto')
             self.FPCanv.draw()
             self.pipe.kill()
     def Get_Video_Info(self):
@@ -238,32 +277,29 @@ class FFAST_MPEGUI(object):
                      '\"'+self.file_paths[0]+'\"']
         AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
                       '\"'+self.file_paths[0]+'\"']
-        print(" ".join(AINFOPROBE))
+        self.Print_Console(" ".join(AINFOPROBE))
         resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
-        print(RAW)
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
         self.VideoInfo ={'format':'.'+self.file_paths[0].rsplit('.',1)[-1]}
         for i in range(len(INFO)):
             try:
                 self.VideoInfo[INFO[i][0]] = eval(INFO[i][1])
-                print(eval(INFO[i][1]))
             except NameError:
                 self.VideoInfo[INFO[i][0]] = INFO[i][1]
         self.VideoInfo['audio streams'] = resulta.communicate()[0].decode().count('audio')
         #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
-        print(self.VideoInfo['format'] ) #we add this for convenience, so we can construct names and file-extensions separately
-        print(self.VideoInfo)
         VideoName = self.file_paths[0].rsplit('.',1)[0]
         self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
-        print(self.VideoInfo['name'] ) 
-        self.VCSlider.config(from_=0, to=self.VideoInfo['duration'])
+        self.VCSlider.config(from_=0, to=self.VideoInfo['duration']-1/self.VideoInfo['r_frame_rate'])
         self.StartTime.set(GetTime(0)[0])
         self.Timestamp = GetTime(self.VideoInfo['duration'])[0]
         self.EndTime.set(GetTime(self.VideoInfo['duration'])[0])
         self.CurrentTime.set(GetTime(0)[0])
         self.VCSlider.config(resolution = 1/self.VideoInfo['r_frame_rate'])
+        
+        self.Print_Console(self.VideoInfo)
         
     
     def MaintainAspect(self,event):
@@ -276,7 +312,7 @@ class FFAST_MPEGUI(object):
         self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
         self.OUTPUTNAME.trace_add('write',self.CheckNameAvailable)
         self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
-        print( self.FileExist)
+        self.Print_Console( self.FileExist)
         if self.FileExist == True:
             self.QuestFrame = tk.Toplevel(root)
             self.QuestFrame.focus()
@@ -325,8 +361,8 @@ class FFAST_MPEGUI(object):
                             '-map 0 -vcodec copy -acodec copy',
                             self.OUTPUT]
                 self.H = subprocess.Popen(" ".join(FFASTCMD),stdin = subprocess.PIPE,bufsize=-1, shell=False)
-                print('oi, this is the output you want:')
-                print(self.H.stderr)
+                self.Print_Console('oi, this is the output you want:')
+                self.Print_Console(self.H.stderr)
                 
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
                 FFASTCMD = ['ffmpeg -y -i',
@@ -357,7 +393,7 @@ class FFAST_MPEGUI(object):
                    self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                    
                else:
-                   print('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
+                   self.Print_Console('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
                    E = subprocess.Popen('echo You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
                    E.kill()
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
@@ -452,10 +488,10 @@ class FFAST_MPEGUI(object):
                 os.remove(self.save_location[0]+'\\'+'Palette.png')
                 os.remove(self.save_location[0]+'\\'+'Palettevideo.mp4')
                 os.remove(self.MListOUT)
-            print('Executed code:\n'+" ".join(FFASTCMD))
+            self.Print_Console('Executed code:\n'+" ".join(FFASTCMD))
     
     def close(self):
-        print('Bye!')
+        self.Print_Console('Bye!')
         root.destroy()
         
     def MergeList(self):
@@ -470,7 +506,7 @@ class FFAST_MPEGUI(object):
         
     def PollKill(self,Process,Message):
         while Process.poll() is None:
-                    print(Message)
+                    self.Print_Console(Message)
                     time.sleep(1)
         Process.kill()
 
