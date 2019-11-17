@@ -416,18 +416,21 @@ class FFAST_MPEGUI(object):
                 
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
                 self.MergeList()
-                FFASTCMD = ['ffmpeg -y -r 1/30 -f concat -safe 0 -i',
+                FFASTCMD = ['ffmpeg -f concat -safe 0 -i',
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
-                            '-c:v libx264 -r 25 -pix_fmt yuv420p -t 15', 
+                            '-vcodec libx264 -b:v 800k', 
                             self.OUTPUT]
                 self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Merging Videos From Mergelist')
                # os.remove(self.MListOUT)
             if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
-                print('Not Available Yet')
+                self.MergeList()
+                FFASTCMD = ['ffmpeg -f concat -safe 0 -i',
+                            '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
+                            self.OUTPUT]
+                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.PollKill(self.H,'Merging Videos From Mergelist')
     
-            
-                        
             print('Executed code:\n'+" ".join(FFASTCMD))
     
     def close(self):
@@ -436,7 +439,10 @@ class FFAST_MPEGUI(object):
         
     def MergeList(self):
         self.MListOUT = self.save_location[0]+'\\'+'MergeList.txt'
-        FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n' for n in range(len(self.SelFiles.get(0,'end')))] 
+        if self.VideoInfo['format'] in ['.png','.jpeg','.jpg','.tiff','.tiff','.svg','.bpg']:
+            FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n duration 0.03333333333 \n' for n in range(len(self.SelFiles.get(0,'end')))] 
+        else:
+            FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n' for n in range(len(self.SelFiles.get(0,'end')))]
         MergeList = open(self.MListOUT, "w")
         MergeList.write("".join(FList))
         MergeList.close()
