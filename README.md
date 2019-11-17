@@ -1,4 +1,4 @@
-# FFAST-MPEG
+# FFAST-MPEG: Alpha v1.0
  A really "inefficient" (Just the frame preview, really), but non-commandline, quick-fix tool for editing videos in simple ways. **A list of currently supported FFMPEG operations, and what I am currently working on, can be found at the end of the readme.** Most video->video operations are not going to require re-encoding (making it lightning fast to use) but some (like making gifs, and creating image sequences) will require some.
 
 Right now, FFMPEG is used to dump an image buffer into a numpy array, which is then fed into... Matplotlib's imshow. I know it's not a very elegant solution, but it is the only solution that I could think of. It works, at least.
@@ -35,11 +35,11 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
 
 * Multi Video Operation
 
-        - "Merge Videos",
+        - "Merge Videos",                       [DONE]
         
-        - "Convert Image Sequence to Video",
+        - "Convert Image Sequence to Video",    [DONE]
         
-        - "Convert Image Sequence to Gif"
+        - "Convert Image Sequence to Gif"       [DONE] - Needs fixing, but it "works"
         
 * General Operations:
  
