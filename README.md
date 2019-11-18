@@ -1,15 +1,18 @@
-# FFAST-MPEG: Alpha v1.0
+# FFAST-MPEG: Alpha v1.1
  A really "inefficient" (Just the frame preview, really), but non-commandline, quick-fix tool for editing videos in simple ways. **A list of currently supported FFMPEG operations, and what I am currently working on, can be found at the end of the readme.** Most video->video operations are not going to require re-encoding (making it lightning fast to use) but some (like making gifs, and creating image sequences) will require some.
 
 Right now, FFMPEG is used to dump an image buffer into a numpy array, which is then fed into... Matplotlib's imshow. I know it's not a very elegant solution, but it is the only solution that I could think of. It works, at least.
 
 Please keep in mind that this is a really early WIP. But feel free to contribute, and make changes. I'll likely be accepting any pull requests - no matter how small the feature. Just give me a good summary :)
 
+Requirements:
+You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it to your PATH environment variable!
+
 ![The appearance of the Editor in version v0.1](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG.PNG)
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
 **Currently doing**
-  * Implementing the last of the single video/gif operations. However, I might make a general option appear that simply lets you choose the file format that you wish to use. 
+  * Taking a break - The current version does most tasks well enough, I just need to learn how to compile the software into something that isn't 800 MB
   
 
   
@@ -39,7 +42,7 @@ Please keep in mind that this is a really early WIP. But feel free to contribute
         
         - "Convert Image Sequence to Video",    [DONE]
         
-        - "Convert Image Sequence to Gif"       [DONE] - Needs fixing, but it "works"
+        - "Convert Image Sequence to Gif"       [DONE]
         
 * General Operations:
  
