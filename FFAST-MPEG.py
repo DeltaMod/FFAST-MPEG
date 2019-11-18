@@ -4,16 +4,17 @@ FFAST-MPEG - A quicker than usual way to make gifs, trim videos, split videos an
 
 Current Version: pre-alpha v0.6  
 """
-import os, subprocess
-import matplotlib
-matplotlib.use('TKagg') 
+from os import path,remove
+from subprocess import Popen,PIPE
+#import matplotlib
+#matplotlib.use('TKagg') 
 import tkinter as tk
 from tkinter import filedialog as fd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
-import numpy as np
-import time
+    FigureCanvasTkAgg) #, NavigationToolbar2Tk
+from numpy import floor,arange,frombuffer
+from time import gmtime, strftime, sleep
 
 plt.rcParams['figure.dpi']         = 20
 plt.rcParams['axes.grid']          = False
@@ -67,9 +68,9 @@ DDRelief    = 'sunken'
 AspectRatioMaintain = False
 ##Set up a command to handle keeping a correct time format
 def GetTime(rawtime):
-        seconds  = np.floor(rawtime)
+        seconds  = floor(rawtime)
         decimals = rawtime - seconds
-        SecTime = time.strftime("%H:%M:%S", time.gmtime(seconds))
+        SecTime = strftime("%H:%M:%S", gmtime(seconds))
         RealTime = SecTime+str(decimals)[1:5]
         return(RealTime,rawtime)
 
@@ -210,8 +211,8 @@ class FFAST_MPEGUI(object):
             self.SelFiles.delete(0,tk.END)
         self.file_paths = fd.askopenfilenames()
         file_paths = [str(self.file_paths[n]) for n in range(len(self.file_paths))]
-        self.file_paths = [os.path.abspath(file_paths[n]) for n in range(len(file_paths))]
-        self.save_location = [os.path.dirname(os.path.abspath(file_paths[n])) for n in range(len(file_paths))]
+        self.file_paths = [path.abspath(file_paths[n]) for n in range(len(file_paths))]
+        self.save_location = [path.dirname(path.abspath(file_paths[n])) for n in range(len(file_paths))]
         self.Print_Console(self.file_paths)
         self.Print_Console(self.save_location)
         self.Print_Console('Loaded in:\n'+''.join(self.file_paths))
@@ -236,7 +237,7 @@ class FFAST_MPEGUI(object):
         TIN = self.CurrentTime.get()
         if TIN.count(':') == 2 and TIN.count('.') == 1:
                 TO = SetTime(TIN)
-                if round(TO,3) in np.arange(round(0.0,3),round(self.VideoInfo['duration'],3),0.001):
+                if round(TO,3) in arange(round(0.0,3),round(self.VideoInfo['duration'],3),0.001):
                     self.VCSlider.set(TO) 
                 else:
                     self.master.focus()
@@ -261,11 +262,11 @@ class FFAST_MPEGUI(object):
                         '-f', 'image2pipe',
                         '-pix_fmt', 'rgb24',
                         '-vcodec','rawvideo', '-']
-            self.pipe = subprocess.Popen(" ".join(RFConmm), stdout=subprocess.PIPE,stderr=subprocess.PIPE, bufsize=10**8)
+            self.pipe = Popen(" ".join(RFConmm), stdout=PIPE,stderr=PIPE, bufsize=10**8)
             # read width*height*3 bytes (= 1 frame)
             raw_image = self.pipe.stdout.read(self.VideoInfo['height']*self.VideoInfo['width']*3)
             # transform the byte read into a numpy array 
-            mpimage =  np.frombuffer(raw_image, dtype='uint8')
+            mpimage =  frombuffer(raw_image, dtype='uint8')
             mpimage = mpimage.reshape((self.VideoInfo['height'],self.VideoInfo['width'],3))
             self.FPrev = plt.imshow(mpimage,aspect='auto')
             self.FPCanv.draw()
@@ -278,8 +279,8 @@ class FFAST_MPEGUI(object):
         AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
                       '\"'+self.file_paths[0]+'\"']
         self.Print_Console(" ".join(AINFOPROBE))
-        resultv = subprocess.Popen(" ".join(VINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        resulta = subprocess.Popen(" ".join(AINFOPROBE), shell=False,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        resultv = Popen(" ".join(VINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
+        resulta = Popen(" ".join(AINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
         RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
         INFO = [RAW[n].split('=') for n in range(len(RAW))]
         self.VideoInfo ={'format':'.'+self.file_paths[0].rsplit('.',1)[-1]}
@@ -311,7 +312,7 @@ class FFAST_MPEGUI(object):
     def Check_File_Exist(self):
         self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
         self.OUTPUTNAME.trace_add('write',self.CheckNameAvailable)
-        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
         self.Print_Console( self.FileExist)
         if self.FileExist == True:
             self.QuestFrame = tk.Toplevel(root)
@@ -333,7 +334,7 @@ class FFAST_MPEGUI(object):
         except:
             None
     def CheckNameAvailable(self,*args):
-        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
         if self.FileExist == False:
             self.NameEntry.config(bg='lightgreen')
             self.NameChange.config(state='normal')
@@ -341,7 +342,7 @@ class FFAST_MPEGUI(object):
             self.NameEntry.config(bg='coral')
             self.NameChange.config(state='disabled')
     def CheckIfConvert(self):
-        self.FileExist = os.path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
+        self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format'])
         if self.FileExist == False:
             self.convert()
             
@@ -360,7 +361,7 @@ class FFAST_MPEGUI(object):
                             '-ss '+ self.Timestamp,
                             '-map 0 -vcodec copy -acodec copy',
                             self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD),stdin = subprocess.PIPE,bufsize=-1, shell=False)
+                self.H = Popen(" ".join(FFASTCMD),stdin = PIPE,bufsize=-1, shell=False)
                 self.Print_Console('oi, this is the output you want:')
                 self.Print_Console(self.H.stderr)
                 
@@ -371,7 +372,7 @@ class FFAST_MPEGUI(object):
                             '-map 0 -vcodec copy -acodec copy',
                             '-t '+ self.Timestamp,
                             self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-A'+self.VideoInfo['format']+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name']+'-B'+self.VideoInfo['format']+'\"'
@@ -381,7 +382,7 @@ class FFAST_MPEGUI(object):
                             '-map 0 -c copy ' +OUTPUT1,
                             '-ss ' + self.Timestamp, 
                             '-map 0 -c copy ' +OUTPUT2]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
                if self.VideoInfo['audio streams'] > 1:
@@ -390,11 +391,11 @@ class FFAST_MPEGUI(object):
                                 '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"',
                                 '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
                                 self.OUTPUT]
-                   self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                   self.H = Popen(" ".join(FFASTCMD), shell=False)
                    
                else:
                    self.Print_Console('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
-                   E = subprocess.Popen('echo You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
+                   E = Popen('echo You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged')
                    E.kill()
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
                 #This is a two step process - First, we generate a palette:
@@ -408,11 +409,11 @@ class FFAST_MPEGUI(object):
                              '-i',OUTPUT1,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
                              self.OUTPUT])
                 
-                self.H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
+                self.H = Popen(" ".join(FFASTCMDT[0]), shell=False)
                 self.PollKill(self.H,'Palette is being generated')
-                self.H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                self.H = Popen(" ".join(FFASTCMDT[1]), shell=False)
                 self.PollKill(self.H,'Gif is being generated')
-                os.remove(self.save_location[0]+'\\'+'Palette.png')
+                remove(self.save_location[0]+'\\'+'Palette.png')
                 
                 FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
@@ -420,14 +421,14 @@ class FFAST_MPEGUI(object):
                             '\"'   + self.file_paths[0]  + '\"',
                             '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
                 #'-vf \"select=eq(pict_type\,I)\" -vsync vfr',
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Generating Image Sequence')
                 
             if self.FFSel.get() == FOP[6]: #Convert Gif to Video
                 FFASTCMD = ['ffmpeg -y -f gif -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Generating Video From Gif')
                 
             if self.FFSel.get() == FOP[7]: #Convert Gif to Image Sequence
@@ -435,7 +436,7 @@ class FFAST_MPEGUI(object):
                             '\"'   + self.file_paths[0]  + '\"',
                             '-vsync 0',
                             '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Converting Gif to Image Sequence')
                 
         if len(self.file_paths) > 1:
@@ -446,9 +447,9 @@ class FFAST_MPEGUI(object):
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-c copy', 
                             self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Merging Videos From Mergelist')
-                os.remove(self.MListOUT)
+                remove(self.MListOUT)
                 
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
                 self.MergeList()
@@ -456,9 +457,9 @@ class FFAST_MPEGUI(object):
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-vcodec libx264 -b:v 800k', 
                             self.OUTPUT]
-                self.H = subprocess.Popen(" ".join(FFASTCMD), shell=False)
+                self.H = Popen(" ".join(FFASTCMD), shell=False)
                 self.PollKill(self.H,'Merging Video From Mergelist')
-                os.remove(self.MListOUT)
+                remove(self.MListOUT)
             if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
                 self.MergeList()
                 #ffmpeg -i cropped/%02d.png -vf palettegen palette.png
@@ -477,17 +478,17 @@ class FFAST_MPEGUI(object):
                              '\"'  + self.MListOUT  + '\"',
                              '-i',OUTPUT2,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
                              self.OUTPUT]) #use palette to make gif
-                self.H = subprocess.Popen(" ".join(FFASTCMDT[0]), shell=False)
+                self.H = Popen(" ".join(FFASTCMDT[0]), shell=False)
                 self.PollKill(self.H,'Palette video is being generated')
-                self.H = subprocess.Popen(" ".join(FFASTCMDT[1]), shell=False)
+                self.H = Popen(" ".join(FFASTCMDT[1]), shell=False)
                 self.PollKill(self.H,'Palette is being generated')
-                self.H = subprocess.Popen(" ".join(FFASTCMDT[2]), shell=False)
+                self.H = Popen(" ".join(FFASTCMDT[2]), shell=False)
                 self.PollKill(self.H,'Gif is being generated')
                 
                 FFASTCMD = FFASTCMDT[0]+FFASTCMDT[1]+FFASTCMDT[2]
-                os.remove(self.save_location[0]+'\\'+'Palette.png')
-                os.remove(self.save_location[0]+'\\'+'Palettevideo.mp4')
-                os.remove(self.MListOUT)
+                remove(self.save_location[0]+'\\'+'Palette.png')
+                remove(self.save_location[0]+'\\'+'Palettevideo.mp4')
+                remove(self.MListOUT)
             self.Print_Console('Executed code:\n'+" ".join(FFASTCMD))
     
     def close(self):
@@ -507,7 +508,7 @@ class FFAST_MPEGUI(object):
     def PollKill(self,Process,Message):
         while Process.poll() is None:
                     self.Print_Console(Message)
-                    time.sleep(1)
+                    sleep(1)
         Process.kill()
 
 root = tk.Tk()
