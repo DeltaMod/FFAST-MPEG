@@ -2,6 +2,7 @@
  A really "inefficient" (Just the frame preview, really), but non-commandline, quick-fix tool for editing videos in simple ways. **A list of currently supported FFMPEG operations, and what I am currently working on, can be found at the end of the readme.** Most video->video operations are not going to require re-encoding (making it lightning fast to use) but some (like making gifs, and creating image sequences) will require some.
 
 Right now, FFMPEG is used to dump an image buffer into a numpy array, which is then fed into... Matplotlib's imshow. I know it's not a very elegant solution, but it is the only solution that I could think of. It works, at least.
+Addendum: I know that you can call ffplay to get full playback of the video,  but I cannot think of a way to get that to emb inside of tkinter. Perhaps I will add a feature that sets playback to the selected region
 
 Please keep in mind that this is a really early WIP. But feel free to contribute, and make changes. I'll likely be accepting any pull requests - no matter how small the feature. Just give me a good summary :)
 
@@ -53,6 +54,8 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
         - Automatically deleting original videos after performing an operation
         
         - Dynamically adding complex filters?    [Started]
+        
+        - Set video range using overlapped sliders that hide/show when you toggle "start" and "end" points. Alternatively, add an end slider that can be interacted with at the same time? Note that the operation for trimming would actually be: Trim from end, then trim the newly trimmed video from start. Otherwise, you can lose sound sync.
         
         - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc) [Started]
         
