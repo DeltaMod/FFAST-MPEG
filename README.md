@@ -12,7 +12,7 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
 **Currently doing**
-  * Taking a break - The current version does most tasks well enough, I just need to learn how to compile the software into something that isn't 800 MB
+  * Working on letting the user determine the parameters of the complex filter via a simple interface.
   
 
   
@@ -46,15 +46,13 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
         
 * General Operations:
  
-        - Automatic Naming for Image Sequences
+        - Automatic Naming for Image Sequences  [Done?]
  
-        - Automatically deleting original videos after trimming
- 
-        - Automatically deleting original videos after merging
+        - Automatically deleting original videos after performing an operation
         
-        - Dynamically adding complex filters?
+        - Dynamically adding complex filters?    [Started]
         
-        - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc)
+        - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc) [Started]
         
         - Adding image sequence to gif/video parameters (like encoding quality, framerate, interpolation quality, etc.
         
