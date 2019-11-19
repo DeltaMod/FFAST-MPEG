@@ -47,6 +47,8 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
 * General Operations:
  
         - Automatic Naming for Image Sequences  [Done?]
+        
+        - Display first frame of each image/video imported instead of just from the first video/image when moving preview
  
         - Automatically deleting original videos after performing an operation
         
@@ -57,4 +59,4 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
         - Adding image sequence to gif/video parameters (like encoding quality, framerate, interpolation quality, etc.
         
         - Adding overwrite/rename/cancel options when an automatically generated name is matching one in the same directory [DONE]
-  
+       
