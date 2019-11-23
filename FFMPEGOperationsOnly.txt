@@ -1,0 +1,76 @@
+         
+#Remove Video Footage Before Timetamp
+CMD = ['ffmpeg -y -i',path,'-ss timestamp -map 0 -vcodec copy -acodec copy',output]
+#Remove Video Footage After Timetamp
+CMD = ['ffmpeg -y -i', path, '-ss starttime -map 0 -vcodec copy -acodec copy -t timestamp',output]
+#Split Video at Timestamp
+CMD = ['ffmpeg -y -i',path,'-t timestamp1 -map 0 -c copy',output1,'-ss timestamp2 -map 0 -c copy ',output2]
+#Merge Multichannel Audio of Video
+CMD = ['ffmpeg -y -i', path,  '-filter_complex "OPTIONS" -map "0:v:0" -map N_a"[a]" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',outputpath]
+#Video to Gif
+CMD1 = ['ffmpeg -y -i',path,'-filter_complex "OPTIONS" palette.png']
+CMD2 = ['ffmpeg -y -i',path,'-i palette.png -filter_complex "OPTIONS"',output] 
+#Video to Image Sequence
+CMD = ['ffmpeg -y -i',path,'outname%04d.png']
+#Gif to Video
+CMD = ['ffmpeg -y [-r 30] -i',path,'-movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2"',output]
+CMD = ['ffmpeg -y -f gif -i',path,output]
+#Gif to Image Sequence
+CMD = ['ffmpeg -y -i',path,'-vsync 0 outname%04d.png']
+#Merge Videos
+CMD = ['ffmpeg -y -f concat -safe 0 -i',mergelist,'-c copy',output] 
+#Image Sequence to Video
+CMD = ['ffmpeg -y -f concat -safe 0 -i',mergelist,'-vcodec libx264 -b:v 800k',output]
+#Image sequence to Gif
+CMD1= ['ffmpeg -y -f concat -safe 0 -i',mergelist,'-vcodec libx264 -b:v 800k',output]       
+CMD2= ['ffmpeg -y -i',path,'-filter_complex "OPTIONS" palette.png']
+CMD3= ['ffmpeg -y -f concat -safe 0 -i',mergelist,'-i palette.png -filter_complex "OPTIONS"',output]
+
+
+GENERAL:
+#All begin with:
+Entry     = 'ffmpeg -y'
+#If GIF, then optionally we can add:
+PARAM  = '-r FPS'
+#Then we can have: single file = 2 only, path is target | 1+2 is multi-file, where path = mergelist
+SingleFile   = 'i',path
+FileConcat   = {'-f concat -safe 0 '}   +   'i',path
+#1: ---concat----    | 2: --- input ---    |  
+#Then, we have some rules:
+it goes:
+#for video out from path or mergelist
+1)FILTER  = filter_complex+"Options" # No palette - Video Files
+  MAP     = {-map 0} "for all"  or {-map ":video:"  -map ":audio:"} "for selective"
+  Copyenc = {-c copy} "for all" or {-c:v copy c:a copy} "for selective"
+  ->output
+#gif with mergelist
+2) ->filter_complex+"Options" #Generating Palette
+   ->outputpalette.png
+3) ->'-i palette.png filter_complex+"Options"'
+   ->output
+
+#We build up components based on OUTPUT:
+#If Video Output:
+
+Entry+PARAM+SingleFile+FILTER+MAP+CopyEnc+Output
+PARAM and FILTER can be empty
+FILTER  = 'filter_complex'+FLTROPT
+FLTROPT = filter1+filter2+filter3+filter4+filter5
+#if palettegen: 
+FLTROPT = \"fps=15,scale=720:-1:flags=lanczos,palettegen=stats_mode=diff:reserve_transparent=1\"'
+        = FPS+':'+SCALE+':'+FLAGS+','+'palettegen'+PTStatmode+':'PTTransp
+        
+MAP = allmap + vidmap + audmap
+where allmap  = '-map 0' if vidmap and audmap are empty
+#audmap must be set automatically if complex filter for multichannel is used
+CopyEnc = allenc + venc + aenc
+allenc = '-c copy' if venc and aenc are empty
+venc = '-c:v ' + outformatenc #based on output format
+aenc = '-c:a ' + audioenc     #based on some stuff 
+
+#NOTE: '-map 0 -vcodec copy -acodec copy' = 'map 0 -c copy' i.e. map all, codec all copy
+#=> any case where you are explicitly copying ALL channels, you can just use '-map 0 -c copy'
+#When you want to convert/reencode the video/audio channel, you can specify:
+# -c:v videncoder and -c:a audencoder 
+# if you want to select specific streams, or merge streams, you can use:
+# -map "0:v:0" -map "[a]"

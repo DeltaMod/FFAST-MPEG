@@ -145,56 +145,67 @@ class FFAST_MPEGUI(object):
         self.AddCanv = tk.Frame(root,bg=frameBG,width=self.XDIM,             padx=10, pady=10, bd=BDW, relief='groove')
         self.AddCanv.grid(row = 1, column = 1, rowspan = 2, sticky='nwe')
         
-        self.Var_FPS     = tk.StringVar(root); self.Var_FPS.set('0')
-        self.Var_Scale   = tk.StringVar(root); self.Var_Scale.set('0')
-        self.Var_Height  = tk.StringVar(root); self.Var_Height.set('0')
-        self.Var_Width   = tk.StringVar(root); self.Var_Width.set('0')
-        self.Var_Bitrate = tk.StringVar(root); self.Var_Bitrate.set('0')
-        self.Var_Format  = tk.StringVar(root); self.Var_Format.set('')
-        self.Var_Complex = tk.BooleanVar(root); self.Var_Complex.set(False);
+        #Ensure that any click outside of entry will result in focus loss
+        root.bind_class("Frame","<1>", lambda event:event.widget.focus_set())
+        
+        
+        FILTEROPTIONS = ['FPS','Scale','Height','Width','Bitrate','Format']
+        
+        #for opt in FILTEROPTIONS:
+        #       setattr(self,'Var_'+opt,tk.StringVar(root)); self.__getattribute__('Var_'+opt).set('0')
+        self.Var_Outputname = tk.StringVar(root); self.Var_Outputname.set('')
+        self.Var_FPS      = tk.StringVar(root); self.Var_FPS.set('0')
+        self.Var_Scale    = tk.StringVar(root); self.Var_Scale.set('0')
+        self.Var_Height   = tk.StringVar(root); self.Var_Height.set('0')
+        self.Var_Width    = tk.StringVar(root); self.Var_Width.set('0')
+        self.Var_Bitrate  = tk.StringVar(root); self.Var_Bitrate.set('0')
+        self.Var_Format   = tk.StringVar(root); self.Var_Format.set('')
+        self.Var_Complex  = tk.BooleanVar(root); self.Var_Complex.set(False);
         
         
         
+        self.Edit_FileName = tk.Entry(self.AddCanv,justify='l',textvariable=self.Var_Outputname,state='disabled')
+        self.Edit_FileName.grid(row=0,column=1,columnspan=5,sticky='nsew')
+        self.Var_Outputname.trace_add('write',self.Check_Filename_Available)
         
-        
-        tk.Label(self.AddCanv,text='Use Complex Filter').grid(column=1,row=1,sticky='nswe')
+        tk.Label(self.AddCanv,text='Use Complex Filter').grid(column=0,row=1,sticky='nswe')
         self.Edit_ComplexFilter= tk.Checkbutton(self.AddCanv,variable=self.Var_Complex,command=self.Toggle_Complex_Filter)
-        self.Edit_ComplexFilter.grid(row=1,column=2,sticky='nswe')
+        self.Edit_ComplexFilter.grid(row=1,column=1,sticky='nswe')
         
-        tk.Label(self.AddCanv,text='Set Custom').grid(column=4,row=0,sticky='nswe')
+        tk.Label(self.AddCanv,text='Set Custom').grid(column=3,row=1,sticky='nswe')
         self.Edit_FPS     = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_FPS)
-        self.Edit_FPS.grid(row=1,column=4,sticky='nsew')
+        self.Edit_FPS.grid(     row=2,column=3,sticky='nsew')
         self.Edit_Scale   = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_Scale)
-        self.Edit_Scale.grid(row=2,column=4,sticky='nsew')
+        self.Edit_Scale.grid(   row=3,column=3,sticky='nsew')
         self.Edit_Height  = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_Height)
-        self.Edit_Height.grid(row=3,column=4,sticky='nsew')
+        self.Edit_Height.grid(  row=4,column=3,sticky='nsew')
         self.Edit_Width   = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_Width)
-        self.Edit_Width.grid(row=4,column=4,sticky='nsew')
+        self.Edit_Width.grid(   row=5,column=3,sticky='nsew')
         self.Edit_Bitrate = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_Bitrate)
-        self.Edit_Bitrate.grid(row=5,column=4,sticky='nsew')
+        self.Edit_Bitrate.grid( row=6,column=3,sticky='nsew')
         self.Edit_Format  = tk.Entry(self.AddCanv,justify='c',textvariable=self.Var_Format)
-        self.Edit_Format.grid(row=6,column=4,sticky='nsew')
+        self.Edit_Format.grid(  row=7,column=3,sticky='nsew')
         
-        tk.Label(self.AddCanv,text='FPS').grid(column=3,row=1,sticky='nswe')
-        tk.Label(self.AddCanv,text='Scale').grid(column=3,row=2,sticky='nswe')
-        tk.Label(self.AddCanv,text='Height').grid(column=3,row=3,sticky='nswe')
-        tk.Label(self.AddCanv,text='Width').grid(column=3,row=4,sticky='nswe')
-        tk.Label(self.AddCanv,text='Bitrate').grid(column=3,row=5,sticky='nswe')
-        tk.Label(self.AddCanv,text='Format').grid(column=3,row=6,sticky='nswe')
+        tk.Label(self.AddCanv,text='FPS').grid(    column=2,row=1,sticky='nswe')
+        tk.Label(self.AddCanv,text='Scale').grid(  column=2,row=2,sticky='nswe')
+        tk.Label(self.AddCanv,text='Height').grid( column=2,row=3,sticky='nswe')
+        tk.Label(self.AddCanv,text='Width').grid(  column=2,row=4,sticky='nswe')
+        tk.Label(self.AddCanv,text='Bitrate').grid(column=2,row=5,sticky='nswe')
+        tk.Label(self.AddCanv,text='Format').grid( column=2,row=6,sticky='nswe')
         
-        tk.Label(self.AddCanv,text='Source Value').grid(column=6,row=0,sticky='nswe')
+        tk.Label(self.AddCanv,text='Source Value').grid(column=5,row=1,sticky='nswe')
         self.Default_FPS     = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_FPS)
-        self.Default_FPS.grid(row=1,column=6,sticky='nsew')
+        self.Default_FPS.grid(    row=2,column=5,sticky='nsew')
         self.Default_Scale   = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_Scale)
-        self.Default_Scale.grid(row=2,column=6,sticky='nsew')
+        self.Default_Scale.grid(  row=3,column=5,sticky='nsew')
         self.Default_Height  = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_Height)
-        self.Default_Height.grid(row=3,column=6,sticky='nsew')
+        self.Default_Height.grid( row=4,column=5,sticky='nsew')
         self.Default_Width   = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_Width)
-        self.Default_Width.grid(row=4,column=6,sticky='nsew')
+        self.Default_Width.grid(  row=5,column=5,sticky='nsew')
         self.Default_Bitrate = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_Bitrate)
-        self.Default_Bitrate.grid(row=5,column=6,sticky='nsew')
+        self.Default_Bitrate.grid(row=6,column=5,sticky='nsew')
         self.Default_Format  = tk.Label(self.AddCanv,justify='c',textvariable=self.Var_Format)
-        self.Default_Format.grid(row=6,column=6,sticky='nsew')
+        self.Default_Format.grid( row=7,column=5,sticky='nsew')
         
         self.Toggle_Complex_Filter()
          #Close Button
@@ -202,7 +213,7 @@ class FFAST_MPEGUI(object):
         self.close_button.grid(row = 10,column = 10,sticky='es')
         
         #Convert Button
-        self.Convert_Button = tk.Button(self.AddCanv, text='Convert', command=self.Check_File_Exist)
+        self.Convert_Button = tk.Button(self.AddCanv, text='Convert', command=self.Rename_Or_Overwrite,state='disabled')
         self.Convert_Button.grid(row = 0,column = 0,sticky='nwse')
         #Setting Weights of all root relevant columms to be 1
         for j in range(3):
@@ -243,11 +254,11 @@ class FFAST_MPEGUI(object):
         #%% FFMPEG Control Frame                
         ##Select Files Button
         
-        tk.Label(self.FFCanv, text="Select One (or multiple) Files",relief=LabelRelief,bg=LabelBG).grid(row = 2, column = 0,sticky='nswe')
         
-        self.Select_Files_Button = tk.Button(self.FFCanv, text='Click Here to Select Files', command=self.Select_Files)
-        self.Select_Files_Button.grid(row = 3,column = 0,sticky='nswe')
-        
+        self.Select_Files_Button = tk.Button(self.FFCanv, text='Select New File(s)', command=self.Select_Files)#
+        self.Add_Files_Button    = tk.Button(self.FFCanv, text='Add More File(s)',   command=self.Add_Files)
+        self.Select_Files_Button.grid(row = 2,column = 0,rowspan=2,sticky='nswe')
+        self.Add_Files_Button.grid(row = 4,column = 0,rowspan=2,sticky='nswe')
         #Defining StringVar for SIMSEL Options Menu
         self.FFSel = tk.StringVar(root)
         self.FFSel.set(FOP[VSAV['FFMPEG Mode']])
@@ -264,19 +275,22 @@ class FFAST_MPEGUI(object):
             VSAV['FFMPEG Mode'] = int(self.FFSel.get()[0])
             self.Print_Console('Now using: '+ FOP[int(self.FFSel.get()[0])])
             self.Check_Format()
+            if len(self.SelFiles.get(0,'end')) != 0:
+                   self.Var_Outputname.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
+            self.FF_Maker()
         self.FFSel.trace('w',FFMPChange)
         
     
         #Generating the Listbox that will contain a file listing of all selected files
         self.SelFiles = tk.Listbox(self.FFCanv,width = 2*FOPWidth)
-        self.SelFiles.grid(row=1,column=1,rowspan=3,sticky='nsew')
+        self.SelFiles.grid(row=1,column=1,rowspan=6,sticky='nsew')
         tk.Label(self.FFCanv, text="List of Selected Files",relief=LabelRelief,bg=LabelBG).grid(row = 0, column = 1,sticky='nswe')
         
         # Generating the text widget that will contain all console entries
-        tk.Label(self.FFCanv, text="Console Output",relief=LabelRelief,bg=LabelBG).grid(row = 4, column = 1,sticky='nwse')
-        self.ConsoleOUT = tk.Text(self.FFCanv,width = 5,height=10,font=('CMU Serif', 8))
-        self.ConsoleOUT.grid(row=5,column=1,rowspan=1,sticky='nswe')
-       
+        tk.Label(self.FFCanv, text="Console Output",relief=LabelRelief,bg=LabelBG).grid(row = 6, column = 1,sticky='nwse')
+        self.ConsoleOUT = tk.Text(self.FFCanv,width = 5,height=7,font=('CMU Serif', 8))
+        self.ConsoleOUT.grid(row=7,column=1,rowspan=1,sticky='nswe')
+        self.ConsoleOUT.bind("<Key>", lambda e: self.Allow_Text_Copy(e))
         
     
     def Check_Format(self):
@@ -289,7 +303,7 @@ class FFAST_MPEGUI(object):
                 self.VideoInfo['format-out'] = self.VideoInfo['format-in'] = '.mp4'
             self.Print_Console('Output format = '+self.VideoInfo['format-out'])
         if len(self.SelFiles.get(0,'end')) == 0:
-                self.VideoInfo['format-out'] = ''
+                self.VideoInfo = {'format-out':''}
                 
     def Select_Files(self):
         if len(self.SelFiles.get(0,'end')) !=0:
@@ -301,12 +315,29 @@ class FFAST_MPEGUI(object):
         self.Print_Console(self.file_paths)
         self.Print_Console(self.save_location)
         self.Print_Console('Loaded in:\n'+''.join(self.file_paths))
-        
-       
         for n in range(len(self.file_paths)):    
             self.SelFiles.insert(n,self.file_paths[n])
         self.Get_Video_Info() 
         self.Read_Frame(self)
+        
+    def Add_Files(self):
+        if len(self.SelFiles.get(0,'end')) !=0:
+               self.file_paths = fd.askopenfilenames()
+               file_paths = [str(self.file_paths[n]) for n in range(len(self.file_paths))]
+               self.file_paths = [path.abspath(file_paths[n]) for n in range(len(file_paths))]
+               self.save_location = [path.dirname(path.abspath(file_paths[n])) for n in range(len(file_paths))]
+               self.Print_Console(self.file_paths)
+               self.Print_Console(self.save_location)
+               self.Print_Console('Loaded in:\n'+''.join(self.file_paths))
+               
+               for n in range(len(self.file_paths)):    
+                      self.SelFiles.insert(n,self.file_paths[n])
+                      self.Get_Video_Info() 
+                      self.Read_Frame(self)
+        else:
+               self.Select_Files()
+       
+        
     def Print_Console(self,text):
         if type(text) == list:
             PRINT = [str(text[n]) for n in range(len(text))]
@@ -337,6 +368,7 @@ class FFAST_MPEGUI(object):
         self.CurrentTime.set(GetTime(float(self.VCSlider.get()))[0])
         self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
         self.Read_Frame(self)
+        sleep(0.1)
     def Read_Frame(self,event):
         self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
         if len(self.SelFiles.get(0,'end')) !=0:
@@ -347,7 +379,8 @@ class FFAST_MPEGUI(object):
                         '-f', 'image2pipe',
                         '-pix_fmt', 'rgb24',
                         '-vcodec','rawvideo', '-']
-            self.pipe = Popen(" ".join(RFConmm), stdout=PIPE,stderr=PIPE, bufsize=10**8)
+            BuffSz = self.VideoInfo['height']*self.VideoInfo['width']*3 + 500
+            self.pipe = Popen(" ".join(RFConmm), stdout=PIPE,stderr=PIPE, bufsize=BuffSz)
             # read width*height*3 bytes (= 1 frame)
             raw_image = self.pipe.stdout.read(self.VideoInfo['height']*self.VideoInfo['width']*3)
             # transform the byte read into a numpy array 
@@ -356,6 +389,7 @@ class FFAST_MPEGUI(object):
             self.FPrev = plt.imshow(mpimage,aspect='auto')
             self.FPCanv.draw()
             self.pipe.kill()
+            
     def Get_Video_Info(self):
         VINFOPROBE = ['ffprobe',
                      '-v error -select_streams v:0 -show_entries',
@@ -385,18 +419,29 @@ class FFAST_MPEGUI(object):
         self.CurrentTime.set(GetTime(0)[0])
         self.VCSlider.config(resolution = 1/self.VideoInfo['r_frame_rate'])
         self.Check_Format()
-        
         self.Print_Console(self.VideoInfo)
-        
+        self.Convert_Button.config(state='normal')
+        self.Edit_FileName.config(state='normal')
+        self.Var_Outputname.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
     
     def MaintainAspect(self,event):
         if AspectRatioMaintain == True:
             self.XDIM = int(root.winfo_width() - root.winfo_width() % 32)
             self.YDIM = int(self.XDIM*9/32)
             root.geometry('{}x{}'.format(self.XDIM,self.YDIM))
-     
-    def Check_File_Exist(self):
-        self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
+    
+    def Check_Filename_Available(self,*args):
+        self.FileExist = path.isfile( self.save_location[0]+'\\'+self.Var_Outputname.get()+self.VideoInfo['format-out']) 
+        if self.FileExist == False and self.Var_Outputname.get() !='':
+               self.Edit_FileName.config(bg='lightgreen')
+        if self.FileExist == True:
+               self.Edit_FileName.config(bg='coral')
+        if len(self.SelFiles.get(0,'end'))==0:
+               self.Edit_FileName.config(bg='white',state='disabled')
+               self.Convert_Button.config(state='disabled')
+            
+    def Rename_Or_Overwrite(self):
+        self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.Var_Outputname.get())
         self.OUTPUTNAME.trace_add('write',self.CheckNameAvailable)
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-out'])
         self.Print_Console('File Exist = '+str(self.FileExist))
@@ -418,7 +463,13 @@ class FFAST_MPEGUI(object):
         try:
             self.QuestFrame.destroy()
         except:
-            None
+            None 
+            
+    def Allow_Text_Copy(self,event):
+           if(event.state==12 and event.keysym=='c' ):
+                  return
+           else:
+                  return "break"        
     def CheckNameAvailable(self,*args):
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-in'])
         if self.FileExist == False:
@@ -427,31 +478,33 @@ class FFAST_MPEGUI(object):
         if self.FileExist == True:
             self.NameEntry.config(bg='coral')
             self.NameChange.config(state='disabled')
+            
     def CheckIfConvert(self):
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-in'])
         if self.FileExist == False:
             self.convert()
             
     def Toggle_Complex_Filter(self,*args):
-           if self.Var_Complex.get() == True:
-                  self.Edit_Bitrate.config(state='normal')
-                  self.Edit_Format.config( state='normal')
-                  self.Edit_FPS.config(    state='normal')
-                  self.Edit_Width.config(  state='normal')
-                  self.Edit_Height.config( state='normal')
-                  self.Edit_Scale.config(  state='normal')
-                  self.Edit_Scale.config(  state='normal')
-           elif self.Var_Complex.get() == False:
-                  self.Edit_Bitrate.config(state='disabled')
-                  self.Edit_Format.config( state='disabled')
-                  self.Edit_FPS.config(    state='disabled')
-                  self.Edit_Width.config(  state='disabled')
-                  self.Edit_Height.config( state='disabled')
-                  self.Edit_Scale.config(  state='disabled')
-                  self.Edit_Scale.config(  state='disabled')
+        if self.Var_Complex.get() == True:
+              self.Edit_Bitrate.config(state='normal')
+              self.Edit_Format.config( state='normal')
+              self.Edit_FPS.config(    state='normal')
+              self.Edit_Width.config(  state='normal')
+              self.Edit_Height.config( state='normal')
+              self.Edit_Scale.config(  state='normal')
+              self.Edit_Scale.config(  state='normal')
+        elif self.Var_Complex.get() == False:
+              self.Edit_Bitrate.config(state='disabled')
+              self.Edit_Format.config( state='disabled')
+              self.Edit_FPS.config(    state='disabled')
+              self.Edit_Width.config(  state='disabled')
+              self.Edit_Height.config( state='disabled')
+              self.Edit_Scale.config(  state='disabled')
+              self.Edit_Scale.config(  state='disabled')
            
     def convert(self):
         self.PopupDestroy()
+        self.Var_Outputname.set(self.OUTPUTNAME.get())
         self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-in']+'\"'
         if self.FFSel.get() in [FOP[4],FOP[10]]:
             self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.gif'+'\"'
@@ -577,7 +630,7 @@ class FFAST_MPEGUI(object):
                               OUTPUT1,
                              '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=stats_mode=diff:reserve_transparent=1\"',
                               OUTPUT2], #make palette from palette video
-                            ['ffmpeg -f concat -safe 0 -i',
+                            ['ffmpeg -y -f concat -safe 0 -i',
                              '\"'  + self.MListOUT  + '\"',
                              '-i',OUTPUT2,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
                              self.OUTPUT]) #use palette to make gif
@@ -614,6 +667,129 @@ class FFAST_MPEGUI(object):
                     self.Print_Console(Message)
                     sleep(1)
         Process.kill()
+        
+    def FF_Maker(self):
+        if len(self.SelFiles.get(0,'end')) !=0:
+               self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+self.VideoInfo['format-in']+'\"'
+               if self.FFSel.get() in [FOP[4],FOP[10]]:
+                   self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'.gif'+'\"'
+               if self.FFSel.get() in [FOP[9]]:
+                   self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'.mp4'+'\"'
+               
+               ENTRY = 'ffmpeg -y'
+           
+           
+               if self.Var_FPS.get() != '' and self.Var_Format == '.gif':
+                   PARAM = '-r'+self.Var_FPS
+               else:
+                   PARAM = ''
+               
+               
+              #Single or Multi-File operation selector
+               if len(self.SelFiles.get(0,'end')) ==1:
+                   INFILE = '-i ' + '\"'   + self.file_paths[0]  + '\"'
+               elif len(self.SelFiles.get(0,'end')) >1:
+                   self.MergeList()
+                   INFILE = '-f concat -safe 0 i ' + '\"'  + self.MListOUT  + '\"'
+               
+               #We need to consider: 1 - Video in -> Video Out, 2 - Video in -> Multiple Videos Out
+               #                     3 - Video in -> Gif Out,   4 - Gif in -> Video Out
+               if self.VideoInfo['format-out'] in ['.gif','.apng']:
+                      if self.VideoInfo['format-in'] in VidFormat:
+                             PALFILT = '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=stats_mode=diff:reserve_transparent=1\"'
+                             PALOUT  = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'                    
+                             self.FF_PaletteGen  = " ".join([ENTRY,PARAM,INFILE,PALFILT,PALOUT]) 
+                             GIFFILT = '-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"'
+                             GIFOUT  = self.OUTPUT
+                             self.FF_Palette2Gif = " ".join([ENTRY,PARAM,INFILE,'i',PALOUT,GIFFILT,GIFOUT])    
+                             print(self.FF_PaletteGen)
+                             print(self.FF_Palette2Gif)
+                   
+                      elif self.VideoInfo['format-in'] in ImgFormat:
+                            PALFILT = '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=stats_mode=diff:reserve_transparent=1\"'
+                            PALOUT  = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'                    
+                            self.FF_PaletteGen  = " ".join([ENTRY,PARAM,INFILE,PALFILT,PALOUT]) 
+                            GIFFILT = '-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"'
+                            GIFOUT  = self.OUTPUT
+                            self.FF_Palette2Gif = " ".join([ENTRY,PARAM,INFILE,'i',PALOUT,GIFFILT,GIFOUT])
+                            print(self.FF_PaletteGen)
+                            print(self.FF_Palette2Gif)
+               elif self.VideoInfo['format-out'] in VidFormat:
+                     if self.VideoInfo['format-in'] in VidFormat:
+                            vidfilt  = ''
+                            audfilt  = ''
+                            #Audio merge and vol filter "[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"'
+                            FILTER   = vidfilt+audfilt
+                            
+                            allmap   = '-map 0'
+                            vidmap   = '' 
+                            audmap   = ''
+                            MAP      = allmap+vidmap+audmap
+                            
+                            COPYALL = True
+                            if COPYALL == True:
+                                   allcopy  =  '-c copy'
+                                   videoenc = ''
+                                   audenc   = ''
+                            if COPYALL == False:
+                                   allcopy  =  ''
+                                   vidcodec =  '-vcodec libx264'
+                                   videoenc =  '-c:v'+vidcodec
+                                   audenc   =  ''
+                            COPYENC  = allcopy+videoenc+audenc
+                            OUTPUT   = self.OUTPUT
+                            self.FF_IN2VID = " ".join([ENTRY,PARAM,INFILE,FILTER,MAP,COPYENC,OUTPUT])
+                            print(self.FF_IN2VID)
+#Entry+PARAM+SingleFile+FILTER+MAP+CopyEnc+Output
+    """
+    GENERAL:
+    All begin with:
+    Entry     = 'ffmpeg -y'
+    If GIF, then optionally we can add:
+    PARAM  = '-r FPS'
+    Then we can have: single file = 2 only, path is target | 1+2 is multi-file, where path = mergelist
+    SingleFile   = 'i',path
+    FileConcat   = {'-f concat -safe 0 '}   +   'i',path
+    1: ---concat----    | 2: --- input ---    |  
+    Then, we have some rules:
+    it goes:
+    for video out from path or mergelist
+    1)FILTER  = filter_complex+"Options" # No palette - Video Files
+      MAP     = {-map 0} "for all"  or {-map ":video:"  -map ":audio:"} "for selective"
+      Copyenc = {-c copy} "for all" or {-c:v copy c:a copy} "for selective"
+      ->output
+    gif with mergelist
+    2) ->filter_complex+"Options" #Generating Palette
+       ->outputpalette.png
+    3) ->'-i palette.png filter_complex+"Options"'
+       ->output
+    
+    We build up components based on OUTPUT:
+    If Video Output:
+    
+    Entry+PARAM+SingleFile+FILTER+MAP+CopyEnc+Output
+    PARAM and FILTER can be empty
+    FILTER  = 'filter_complex'+FLTROPT
+    FLTROPT = filter1+filter2+filter3+filter4+filter5
+    if palettegen: 
+    FLTROPT = \"fps=15,scale=720:-1:flags=lanczos,palettegen=stats_mode=diff:reserve_transparent=1\"'
+            = FPS+':'+SCALE+':'+FLAGS+','+'palettegen'+PTStatmode+':'PTTransp
+            
+    MAP = allmap + vidmap + audmap
+    where allmap  = '-map 0' if vidmap and audmap are empty
+    audmap must be set automatically if complex filter for multichannel is used
+    CopyEnc = allenc + venc + aenc
+    allenc = '-c copy' if venc and aenc are empty
+    venc = '-c:v ' + outformatenc #based on output format
+    aenc = '-c:a ' + audioenc     #based on some stuff 
+    
+    NOTE: '-map 0 -vcodec copy -acodec copy' = 'map 0 -c copy' i.e. map all, codec all copy
+    => any case where you are explicitly copying ALL channels, you can just use '-map 0 -c copy'
+    When you want to convert/reencode the video/audio channel, you can specify:
+     -c:v videncoder and -c:a audencoder 
+     if you want to select specific streams, or merge streams, you can use:
+     -map "0:v:0" -map "[a]"
+    """    
 
 root = tk.Tk()
 
