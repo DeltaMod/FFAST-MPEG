@@ -12,7 +12,7 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
 ![The appearance of the Editor in version v0.1](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG.PNG)
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
-**Currently doing**
+**Currently doing [On a break]**
   * Working on letting the user determine the parameters of the complex filter via a simple interface - It is currently just for show, and doesn't do anything!
   
 
