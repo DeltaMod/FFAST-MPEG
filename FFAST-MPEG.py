@@ -471,14 +471,20 @@ class FFAST_MPEGUI(object):
         #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
         VideoName = self.file_paths[0].rsplit('.',1)[0]
         self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
+        print(self.VideoInfo['format-in'])
+        if self.VideoInfo['format-in'] in ImgFormat:
+            for key, value in self.VideoInfo.items():
+                if value == 'N/A':
+                    self.VideoInfo[key] = 0
+            print(self.VideoInfo)            
+            
         print(self.VideoInfo)
         self.VideoInfo['aspect ratio'] = self.VideoInfo['width']/self.VideoInfo['height']
-        self.VCSlider.config(from_=0, to=self.VideoInfo['duration']-1/self.VideoInfo['r_frame_rate'])
+        self.VCSlider.config(from_=0, to=self.VideoInfo['duration'] - 2/self.VideoInfo['r_frame_rate'] ,resolution = 1/self.VideoInfo['r_frame_rate'])
         self.StartTime.set(GetTime(0)[0])
         self.Timestamp = GetTime(self.VideoInfo['duration'])[0]
         self.EndTime.set(GetTime(self.VideoInfo['duration'])[0])
         self.CurrentTime.set(GetTime(0)[0])
-        self.VCSlider.config(resolution = 1/self.VideoInfo['r_frame_rate'])
         self.Check_Format()
         self.Print_Console(self.VideoInfo)
         self.Convert_Button.config(state='normal')
@@ -887,5 +893,6 @@ class FFAST_MPEGUI(object):
 root = tk.Tk()
 
 FFASTGUI = FFAST_MPEGUI(root)
+root.protocol("WM_DELETE_WINDOW", FFASTGUI.Window_Exit_Event)
 root.mainloop()
 
