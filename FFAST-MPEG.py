@@ -42,6 +42,9 @@ FOP = [ "Remove Video Footage Before Timetamp",
         "Merge Videos",
         "Convert Image Sequence to Video",
         "Convert Image Sequence to Gif"]
+
+FOPOUT = ['Video','Video','Video','Video','Gif','Image','Video','Image','Video','Video','Gif']
+
 VidFormat = ['.mp4',
              '.webm',
              '.mkv',
@@ -50,14 +53,14 @@ VidFormat = ['.mp4',
              '.vob',
              '.ogv',
              '.avi',
-             '.MTS',
+             '.mts',
              '.wmv',
              '.yuv',
              '.asf']
 GifFormat = ['.gif',
              '.apng']
 ImgFormat = ['.png',
-             '.TIFF',
+             '.tiff',
              '.bmp',
              'other']
 OUTFORMAT = {'Video':VidFormat,'Gif':GifFormat,'Image':ImgFormat}
@@ -77,6 +80,8 @@ FOPN = {FOP[0]  :'TrimS',
         FOP[9]  :'Seq2V',
         FOP[10] :'Seq2Gif' } #This is to automatically name output properly!
 #Define Colours to use for certain components
+
+
 
 rootBG      = 'bisque'
 frameBG     = 'moccasin'
@@ -112,7 +117,7 @@ class FFAST_MPEGUI(object):
         
     def __init__(self, master):    
         self.master = master 
-         
+        self.surpress_verbose = False 
         master.title('FFASTMPEG')
         self.XDIM = int(1600/2)
         VIDH = 100
@@ -265,7 +270,7 @@ class FFAST_MPEGUI(object):
         ##Select Files Button
         
         
-        self.Select_Files_Button = tk.Button(self.FFCanv, text='Select New File(s)', command=self.Select_Files)#
+        self.Select_Files_Button = tk.Button(self.FFCanv, text='Select New File(s)', command=self.Select_Files)
         self.Add_Files_Button    = tk.Button(self.FFCanv, text='Add More File(s)',   command=self.Add_Files)
         self.Select_Files_Button.grid(row = 2,column = 0,rowspan=2,sticky='nswe')
         self.Add_Files_Button.grid(row = 4,column = 0,rowspan=2,sticky='nswe')
@@ -277,7 +282,7 @@ class FFAST_MPEGUI(object):
         self.DDFFM= tk.OptionMenu(self.FFCanv, self.FFSel, *FOP)
         tk.Label(self.FFCanv, text="Select FFMPEG Mode",relief=LabelRelief,bg=LabelBG).grid(row = 0, column = 0,sticky='nswe')
         self.DDFFM.grid(row = 1, column =0,sticky='nswe')
-        self.DDFFM.config(width = FOPWidth, bg=ButtonBG,activebackground =ButtonABG)
+        self.DDFFM.config(width = FOPWidth, bg=ButtonBG,activebackground = ButtonABG)
         self.DDFFM["menu"].config(bg=ButtonABG)
         
         # link function to change dropdown
@@ -309,7 +314,7 @@ class FFAST_MPEGUI(object):
         self.ConsoleOUT = tk.Text(self.FFCanv,width = 5,height=7,font=('CMU Serif', 8))
         self.ConsoleOUT.grid(row=7,column=1,rowspan=1,sticky='nswe')
         self.ConsoleOUT.bind("<Key>", lambda e: self.Allow_Text_Copy(e))
-
+        
     def Check_Single_Multi_File(self):
         if len(self.SelFiles.get(0,'end')) == 0:
             self.VideosLoaded = 'None'
@@ -319,7 +324,8 @@ class FFAST_MPEGUI(object):
                  
         elif len(self.SelFiles.get(0,'end')) >1:
             self.VideosLoaded = 'Multi'
-           
+        
+        self.NumFiles =  len(self.SelFiles.get(0,'end'))
             
    
     def Preserve_Aspect_H(self,event):
@@ -338,21 +344,24 @@ class FFAST_MPEGUI(object):
                 self.Var_Height.set(str(NewHeight))
 
     def Check_Format(self):
-        if self.FFSel.get() in [FOP[4],FOP[10]]:
-            VSAV['Output Type'] = 'Gif'
-        elif self.FFSel.get() in [FOP[5],FOP[7]]:
-            VSAV['Output Type'] = 'Image'
-        else:
-            VSAV['Output Type'] = 'Video'
+        VSAV['Output Type'] = FOPOUT[int(FGUI.FFSel.get()[0])]
         self.Edit_Format.destroy()
         self.DD_Format_Gen()
         if self.VideosLoaded != 'None':
-            if self.FFSel.get() in [FOP[4],FOP[10]]:
-                self.VideoInfo['format-out'] = '.gif'
-            elif self.FFSel.get() in [FOP[9]]:
+            if VSAV['Output Type'] == 'Video' and self.VideoInfo['format-in'][0] in VidFormat:
+                self.VideoInfo['format-out'] = self.VideoInfo['format-in'][0]
+                self.Var_Format.set(self.VideoInfo['format-out'])
+            elif VSAV['Output Type'] == 'Video' and self.VideoInfo['format-in'][0] not in VidFormat:
                 self.VideoInfo['format-out'] = '.mp4'
-            else:
-                self.VideoInfo['format-out'] = self.VideoInfo['format-in']
+                self.Var_Format.set(self.VideoInfo['format-out'])
+            elif VSAV['Output Type'] == 'Gif':
+                self.VideoInfo['format-out'] = '.gif'
+                self.Var_Format.set(self.VideoInfo['format-out'])
+            elif VSAV['Output Type'] == 'Image':
+                self.VideoInfo['format-out'] = '.png'
+                self.Var_Format.set(self.VideoInfo['format-out'])
+                
+                
                 self.Print_Console('Output format = '+self.VideoInfo['format-out'])
         if self.VideosLoaded == 'None':
             self.VideoInfo = {'format-out':''}
@@ -385,9 +394,10 @@ class FFAST_MPEGUI(object):
             
             for n in range(len(self.file_paths)):    
                 self.SelFiles.insert(n,self.file_paths[n])
+                self.Check_Single_Multi_File()
                 self.Get_Video_Info() 
                 self.Read_Frame(self)
-                self.Check_Single_Multi_File()
+                
         else:
             self.Select_Files()
    
@@ -424,9 +434,11 @@ class FFAST_MPEGUI(object):
         self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
         self.Read_Frame(self)
         sleep(0.1)
+        
     def Read_Frame(self,event):
-        self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
-        if self.VideosLoaded != 'None':
+        
+        if self.VideosLoaded == 'Single':
+            self.Timestamp = GetTime(float(self.VCSlider.get()))[0]
             RFConmm = ['ffmpeg',
                         '-ss', self.Timestamp,
                         '-i','\"'+self.file_paths[0]+'\"',
@@ -434,75 +446,125 @@ class FFAST_MPEGUI(object):
                         '-f', 'image2pipe',
                         '-pix_fmt', 'rgb24',
                         '-vcodec','rawvideo', '-']
-            BuffSz = self.VideoInfo['height']*self.VideoInfo['width']*3 + 500
+            BuffSz = self.VideoInfo['height'][0]*self.VideoInfo['width'][0]*3 + 500
             self.pipe = Popen(" ".join(RFConmm), stdout=PIPE,stderr=PIPE, bufsize=BuffSz)
             # read width*height*3 bytes (= 1 frame)
-            raw_image = self.pipe.stdout.read(self.VideoInfo['height']*self.VideoInfo['width']*3)
+            raw_image = self.pipe.stdout.read(self.VideoInfo['height'][0]*self.VideoInfo['width'][0]*3)
             # transform the byte read into a numpy array 
             mpimage =  frombuffer(raw_image, dtype='uint8')
-            mpimage = mpimage.reshape((self.VideoInfo['height'],self.VideoInfo['width'],3))
+            mpimage = mpimage.reshape((self.VideoInfo['height'][0],self.VideoInfo['width'][0],3))
             self.FPrev = plt.imshow(mpimage,aspect='auto')
             self.FPCanv.draw()
             self.pipe.kill()
+            
+        elif self.VideosLoaded == 'Multi':
+            VID = int(self.VCSlider.get())
+            RFConmm = ['ffmpeg',
+                        '-ss', '0',
+                        '-i','\"'+self.file_paths[VID]+'\"',
+                        '-ss', '0.01',
+                        '-f', 'image2pipe',
+                        '-pix_fmt', 'rgb24',
+                        '-vcodec','rawvideo', '-']
+            BuffSz = self.VideoInfo['height'][VID]*self.VideoInfo['width'][VID]*3 + 500
+            self.pipe = Popen(" ".join(RFConmm), stdout=PIPE,stderr=PIPE, bufsize=BuffSz)
+            # read width*height*3 bytes (= 1 frame)
+            raw_image = self.pipe.stdout.read(self.VideoInfo['height'][VID]*self.VideoInfo['width'][VID]*3)
+            # transform the byte read into a numpy array 
+            mpimage =  frombuffer(raw_image, dtype='uint8')
+            mpimage = mpimage.reshape((self.VideoInfo['height'][VID],self.VideoInfo['width'][VID],3))
+            self.FPrev = plt.imshow(mpimage,aspect='auto')
+            self.FPCanv.draw()
+            self.pipe.kill()
+            
         
     def Get_Video_Info(self):
-        VINFOPROBE = ['ffprobe',
-                     '-v error -select_streams v:0 -show_entries',
-                     'stream=width,height,duration,bit_rate,r_frame_rate,channels,display_aspect_ratio -of default=noprint_wrappers=1',
-                     '\"'+self.file_paths[0]+'\"']
-        AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
-                      '\"'+self.file_paths[0]+'\"']
-        self.Print_Console(" ".join(VINFOPROBE))
-        self.Print_Console(" ".join(AINFOPROBE))
-        resultv = Popen(" ".join(VINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
-        resulta = Popen(" ".join(AINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
-        RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
-        INFO = [RAW[n].split('=') for n in range(len(RAW))]
-        self.VideoInfo ={'format-in':'.'+self.file_paths[0].rsplit('.',1)[-1]}
-        for i in range(len(INFO)):
+        self.ProbeStream = ['width','height','duration','bit_rate','r_frame_rate','display_aspect_ratio']
+        self.VinfoFields = self.ProbeStream+['format-in','format-out','audio streams','name','w_aspect','h_aspect','aspect ratio']
+        self.VideoInfo = dict((key, []) for key in self.VinfoFields)
+        
+        for i in range(len(self.file_paths)):
+            VINFOPROBE = ['ffprobe',
+                         '-v error -select_streams v:0 -show_entries',
+                         'stream='+','.join(self.ProbeStream)+ ' -of default=noprint_wrappers=1',
+                         '\"'+self.file_paths[i]+'\"']
+            AINFOPROBE = ['ffprobe -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 ',
+                          '\"'+self.file_paths[i]+'\"']
+            print(" ".join(AINFOPROBE))
+            print(" ".join(VINFOPROBE))
+            if self.surpress_verbose == False:
+                self.Print_Console(" ".join(VINFOPROBE))
+                self.Print_Console(" ".join(AINFOPROBE))
+            elif i == 0:
+                self.Print_Console(" ".join(VINFOPROBE))
+                self.Print_Console(" ".join(AINFOPROBE))
+                print(" ".join(AINFOPROBE))
+                print(" ".join(VINFOPROBE))
+                
+            resultv = Popen(" ".join(VINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
+            resulta = Popen(" ".join(AINFOPROBE), shell=False,stdout=PIPE, stderr=PIPE)
+            RAW = list(filter(None,resultv.communicate()[0].decode().split('\r\n')))
+            INFO = [RAW[n].split('=') for n in range(len(RAW))]
+
+            self.VideoInfo['format-in'].append('.'+self.file_paths[i].rsplit('.',1)[-1])
+            print(INFO)
+            for j in range(len(INFO)):
+                try:
+                    self.VideoInfo[INFO[j][0]].append(eval(INFO[j][1]))
+                except NameError:
+                    self.VideoInfo[INFO[j][0]].append(INFO[j][1])
+                except SyntaxError:
+                    self.VideoInfo['w_aspect'].append(int(INFO[j][1].split(':')[0]))
+                    self.VideoInfo['h_aspect'].append(int(INFO[j][1].split(':')[1]))
             try:
-                self.VideoInfo[INFO[i][0]] = eval(INFO[i][1])
-            except NameError:
-                self.VideoInfo[INFO[i][0]] = INFO[i][1]
-            except SyntaxError:
-                self.VideoInfo['w_aspect'] = int(INFO[i][1].split(':')[0])
-                self.VideoInfo['h_aspect'] = int(INFO[i][1].split(':')[1])
-        self.VideoInfo['audio streams'] = resulta.communicate()[0].decode().count('audio')
-        #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
-        VideoName = self.file_paths[0].rsplit('.',1)[0]
-        self.VideoInfo['name'] = VideoName.rsplit('\\',1)[-1]
-        print(self.VideoInfo['format-in'])
-        if self.VideoInfo['format-in'] in ImgFormat:
-            for key, value in self.VideoInfo.items():
-                if value == 'N/A':
-                    self.VideoInfo[key] = 0
-            print(self.VideoInfo)            
-            
-        print(self.VideoInfo)
-        self.VideoInfo['aspect ratio'] = self.VideoInfo['width']/self.VideoInfo['height']
-        self.VCSlider.config(from_=0, to=self.VideoInfo['duration'] - 2/self.VideoInfo['r_frame_rate'] ,resolution = 1/self.VideoInfo['r_frame_rate'])
+                if self.VideoInfo['display_aspect_ratio'][-1] == 'N/A':
+                    NearestRatio =  self.gcd(self.VideoInfo['width'][i],self.VideoInfo['height'][i])
+                    self.VideoInfo['w_aspect'].append(self.VideoInfo['width'][i]/NearestRatio)
+                    self.VideoInfo['h_aspect'].append(self.VideoInfo['height'][i]/NearestRatio)
+            except IndexError:
+                NearestRatio =  self.gcd(self.VideoInfo['width'][i],self.VideoInfo['height'][i])
+                self.VideoInfo['w_aspect'].append(self.VideoInfo['width'][i]/NearestRatio)
+                self.VideoInfo['h_aspect'].append(self.VideoInfo['height'][i]/NearestRatio)
+            self.VideoInfo['audio streams'].append(resulta.communicate()[0].decode().count('audio'))
+            #self.VideoInfo['video streams'] = resultv.communicate()[0].decode().count('video')
+            VideoName = self.file_paths[i].rsplit('.',1)[0]
+            self.VideoInfo['name'].append(VideoName.rsplit('\\',1)[-1])
+            self.VideoInfo['aspect ratio'].append(self.VideoInfo['width'][i]/self.VideoInfo['height'][i])
+                    
+        if self.VideosLoaded == 'Single':
+            self.VCSlider.config(from_=0, to=self.VideoInfo['duration'][0] - 2/self.VideoInfo['r_frame_rate'][0] ,resolution = 1/self.VideoInfo['r_frame_rate'][0])
+        elif self.VideosLoaded == 'Multi':
+            for i in range(len(self.SelFiles.get(0,'end'))):
+                self.VideoInfo['duration'][i] = len(self.SelFiles.get(0,'end'))
+            self.VCSlider.config(from_=0, to=self.VideoInfo['duration'][0] - 1,resolution = 1)
         self.StartTime.set(GetTime(0)[0])
-        self.Timestamp = GetTime(self.VideoInfo['duration'])[0]
-        self.EndTime.set(GetTime(self.VideoInfo['duration'])[0])
+        self.Timestamp = GetTime(self.VideoInfo['duration'][0])[0]
+        self.EndTime.set(GetTime(self.VideoInfo['duration'][0])[0])
         self.CurrentTime.set(GetTime(0)[0])
         self.Check_Format()
+        
+        #for key, value in self.VideoInfo.items():
+        #    if self.VideoInfo[key][i] == 'N/A':
+        #       self.VideoInfo[key][i] = 0
+        
         self.Print_Console(self.VideoInfo)
+        print(self.VideoInfo)
         self.Convert_Button.config(state='normal')
         self.Edit_FileName.config(state='normal')
-        self.Var_Outputname.set(self.VideoInfo['name']+'-'+FOPN[self.FFSel.get()])
+        self.Var_Outputname.set(self.VideoInfo['name'][0]+'-'+FOPN[self.FFSel.get()])
         
-        self.Var_FPS.set(    self.VideoInfo['r_frame_rate'])
-        self.Var_Bitrate.set(self.VideoInfo['bit_rate'])
-        self.Var_Width.set(  self.VideoInfo['width'])
-        self.Var_Height.set( self.VideoInfo['height'])
-        self.Var_Format.set(OUTFORMAT[VSAV['Output Type']][OUTFORMAT[VSAV['Output Type']].index(self.VideoInfo['format-out'])])
+        self.Var_FPS.set(    self.VideoInfo['r_frame_rate'][0])
+        self.Var_Bitrate.set(self.VideoInfo['bit_rate'][0])
+        self.Var_Width.set(  self.VideoInfo['width'][0])
+        self.Var_Height.set( self.VideoInfo['height'][0])
+        self.Var_Format.set(OUTFORMAT[VSAV['Output Type']][OUTFORMAT[VSAV['Output Type']].index(self.VideoInfo['format-out'].lower())])
         
-        self.Default_FPS.config(    text = self.VideoInfo['r_frame_rate'])
-        self.Default_Bitrate.config(text = self.VideoInfo['bit_rate'])
-        self.Default_Width.config(  text = self.VideoInfo['width'])
-        self.Default_Height.config( text = self.VideoInfo['height'])
+        self.Default_FPS.config(    text = self.VideoInfo['r_frame_rate'][0])
+        self.Default_Bitrate.config(text = self.VideoInfo['bit_rate'][0])
+        self.Default_Width.config(  text = self.VideoInfo['width'][0])
+        self.Default_Height.config( text = self.VideoInfo['height'][0])
         self.Default_Format.config( text = self.VideoInfo['format-out'])
-          
+        
     def MaintainAspect(self,event):
         if AspectRatioMaintain == True:
             self.XDIM = int(root.winfo_width() - root.winfo_width() % 32)
@@ -579,7 +641,10 @@ class FFAST_MPEGUI(object):
             self.Edit_Width.config(  state='disabled')
             self.Edit_Height.config( state='disabled')
             #self.Edit_Scale.config(  state='disabled')
-       
+    def gcd(self,a, b):
+        """The GCD (greatest common divisor) is the highest number that evenly divides both width and height."""
+        return a if b == 0 else self.gcd(b, a % b)
+    
     def convert(self):
         self.PopupDestroy()
         self.Var_Outputname.set(self.OUTPUTNAME.get())
@@ -727,10 +792,10 @@ class FFAST_MPEGUI(object):
     def close(self):
         self.Print_Console('Bye!')
         root.destroy()
-    
+    #%% REPLACE FORMAT IN WITH IMGLIST HERE!!!
     def MergeList(self):
         self.MListOUT = self.save_location[0]+'\\'+'MergeList.txt'
-        if self.VideoInfo['format-in'] in ['.png','.jpeg','.jpg','.tiff','.tiff','.svg','.bpg']:
+        if self.VideoInfo['format-in'].lower() in ImgFormat:
             FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n duration 0.03333333333 \n' for n in range(len(self.SelFiles.get(0,'end')))] 
         else:
             FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n' for n in range(len(self.SelFiles.get(0,'end')))]
@@ -748,7 +813,7 @@ class FFAST_MPEGUI(object):
         #Defining StringVar for Options Menu
         self.Var_Format = tk.StringVar(root);  self.Var_Format.set(OUTFORMAT[VSAV['Output Type']][0])
         #Generating Dropdown Menu
-        self.Edit_Format= tk.OptionMenu(self.AddCanv, self.Var_Format, *OUTFORMAT[VSAV['Output Type']])
+        self.Edit_Format = tk.OptionMenu(self.AddCanv, self.Var_Format, *OUTFORMAT[VSAV['Output Type']])
         self.Edit_Format.grid(row = 6, column =3,sticky='nswe')
         self.Edit_Format.config(width = 6, bg=ButtonBG,activebackground =ButtonABG)
         self.Edit_Format["menu"].config(bg=ButtonABG)
@@ -787,8 +852,9 @@ class FFAST_MPEGUI(object):
          
             #We need to consider: 1 - Video in -> Video Out, 2 - Video in -> Multiple Videos Out
             #                   3 - Video in -> Gif Out,   4 - Gif in -> Video Out
-            if self.VideoInfo['format-out'] in ['.gif','.apng']:
-                if self.VideoInfo['format-in'] in VidFormat:
+            
+            if self.VideoInfo['format-out'].lower() in ['.gif','.apng']:
+                if self.VideoInfo['format-in'].lower() in VidFormat:
                     PALFILT = '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=stats_mode=diff:reserve_transparent=1\"'
                     PALOUT  = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'                  
                     self.FF_PaletteGen  = " ".join([ENTRY,PARAM,INFILE,PALFILT,PALOUT]) 
@@ -798,7 +864,7 @@ class FFAST_MPEGUI(object):
                     print(self.FF_PaletteGen)
                     print(self.FF_Palette2Gif)
 
-                elif self.VideoInfo['format-in'] in ImgFormat:
+                elif self.VideoInfo['format-in'].lower() in ImgFormat:
                 
                     gfps      = 'fps='   + self.Var_FPS.get()
                     gscale    = 'scale=' + self.Var_Width.get()+':'+self.Var_Height.get()
@@ -814,7 +880,7 @@ class FFAST_MPEGUI(object):
                     print(self.FF_PaletteGen)
                     print(self.FF_Palette2Gif)
                 elif self.VideoInfo['format-out'] in VidFormat:
-                    if self.VideoInfo['format-in'] in VidFormat:
+                    if self.VideoInfo['format-in'].lower() in VidFormat:
                         vidfilt  = ''
                         audfilt  = ''
                         #Audio merge and vol filter "[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"'
@@ -892,7 +958,7 @@ class FFAST_MPEGUI(object):
         
 root = tk.Tk()
 
-FFASTGUI = FFAST_MPEGUI(root)
-root.protocol("WM_DELETE_WINDOW", FFASTGUI.Window_Exit_Event)
+FGUI = FFAST_MPEGUI(root)
+root.protocol("WM_DELETE_WINDOW", FGUI.Window_Exit_Event)
 root.mainloop()
 
