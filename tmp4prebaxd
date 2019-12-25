@@ -671,8 +671,8 @@ class FFAST_MPEGUI(object):
                             self.OUTPUT]
                 self.H = Popen(" ".join(FFASTCMD), shell=False)
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
-                OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-A'+self.VideoInfo['format-in'][0]+'\"' 
-                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-B'+self.VideoInfo['format-in'][0]+'\"'
+                OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-A'+self.VideoInfo['format-in']+'\"' 
+                OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-B'+self.VideoInfo['format-in']+'\"'
                 FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-t ' + self.Timestamp,
@@ -750,7 +750,6 @@ class FFAST_MPEGUI(object):
      
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
                 self.MergeList()
-                
                 FFASTCMD = ['ffmpeg -y -f concat -safe 0 -i',
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-vcodec libx264 -b:v 800k', 
@@ -796,7 +795,7 @@ class FFAST_MPEGUI(object):
     #%% REPLACE FORMAT IN WITH IMGLIST HERE!!!
     def MergeList(self):
         self.MListOUT = self.save_location[0]+'\\'+'MergeList.txt'
-        if self.VideoInfo['format-in'][0].lower() in ImgFormat:
+        if self.VideoInfo['format-in'].lower() in ImgFormat:
             FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n duration 0.03333333333 \n' for n in range(len(self.SelFiles.get(0,'end')))] 
         else:
             FList    = ['file \''+self.SelFiles.get(0,'end')[n]+'\' \n' for n in range(len(self.SelFiles.get(0,'end')))]
@@ -855,7 +854,7 @@ class FFAST_MPEGUI(object):
             #                   3 - Video in -> Gif Out,   4 - Gif in -> Video Out
             
             if self.VideoInfo['format-out'].lower() in ['.gif','.apng']:
-                if self.VideoInfo['format-in'][0].lower() in VidFormat:
+                if self.VideoInfo['format-in'].lower() in VidFormat:
                     PALFILT = '-filter_complex \"fps=24,scale=-1:640,crop=ih:ih,setsar=1,palettegen=stats_mode=diff:reserve_transparent=1\"'
                     PALOUT  = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'                  
                     self.FF_PaletteGen  = " ".join([ENTRY,PARAM,INFILE,PALFILT,PALOUT]) 
@@ -865,7 +864,7 @@ class FFAST_MPEGUI(object):
                     print(self.FF_PaletteGen)
                     print(self.FF_Palette2Gif)
 
-                elif self.VideoInfo['format-in'][0].lower() in ImgFormat:
+                elif self.VideoInfo['format-in'].lower() in ImgFormat:
                 
                     gfps      = 'fps='   + self.Var_FPS.get()
                     gscale    = 'scale=' + self.Var_Width.get()+':'+self.Var_Height.get()
@@ -881,7 +880,7 @@ class FFAST_MPEGUI(object):
                     print(self.FF_PaletteGen)
                     print(self.FF_Palette2Gif)
                 elif self.VideoInfo['format-out'] in VidFormat:
-                    if self.VideoInfo['format-in'][0].lower() in VidFormat:
+                    if self.VideoInfo['format-in'].lower() in VidFormat:
                         vidfilt  = ''
                         audfilt  = ''
                         #Audio merge and vol filter "[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'])+'[a]\"'
