@@ -13,7 +13,6 @@ matplotlib.use('TKagg')
 import tkinter as tk
 from tkinter import filedialog as fd
 import matplotlib.pyplot as plt
-plt.ioff()
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg) #, NavigationToolbar2Tk
 from numpy import floor,arange,frombuffer,ceil
@@ -532,11 +531,7 @@ class FFAST_MPEGUI(object):
             self.VideoInfo['aspect ratio'].append(self.VideoInfo['width'][i]/self.VideoInfo['height'][i])
                     
         if self.VideosLoaded == 'Single':
-            if type(self.VideoInfo['duration'][0]) != int  :
-                self.VideoInfo['duration'][0] = 1
-                self.VCSlider.config(from_=0, to=self.VideoInfo['duration'][0] - 2/self.VideoInfo['r_frame_rate'][0] ,resolution = 1/self.VideoInfo['r_frame_rate'][0])
-            else:
-                self.VCSlider.config(from_=0, to=self.VideoInfo['duration'][0] - 2/self.VideoInfo['r_frame_rate'][0] ,resolution = 1/self.VideoInfo['r_frame_rate'][0])
+            self.VCSlider.config(from_=0, to=self.VideoInfo['duration'][0] - 2/self.VideoInfo['r_frame_rate'][0] ,resolution = 1/self.VideoInfo['r_frame_rate'][0])
         elif self.VideosLoaded == 'Multi':
             for i in range(len(self.SelFiles.get(0,'end'))):
                 self.VideoInfo['duration'][i] = len(self.SelFiles.get(0,'end'))
