@@ -1,4 +1,4 @@
-# FFAST-MPEG: Alpha v1.5 - THE EXPANSION
+# FFAST-MPEG: Beta v1.0 - THE EXPANSION
  A really "inefficient" (Just the frame preview, really), but non-commandline, quick-fix tool for editing videos in simple ways. **A list of currently supported FFMPEG operations, and what I am currently working on, can be found at the end of the readme.** Most video->video operations are not going to require re-encoding (making it lightning fast to use) but some (like making gifs, and creating image sequences) will require some.
 
 Right now, FFMPEG is used to dump an image buffer into a numpy array, which is then fed into... Matplotlib's imshow. I know it's not a very elegant solution, but it is the only solution that I could think of. It works, at least.
@@ -13,7 +13,7 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
 ![The planned appearance of the Editor for version whatever.](https://raw.githubusercontent.com/DeltaMod/FFAST-MPEG/master/FFAST-MPEG-Layout.png)
 
 **Currently doing - The Expansion Pack**
-  * This version rewrites the file loading process, and allows for multi-file-first-frame previews, and thus will also allow for gif order previews when you intend to make a gif from image files. I had to rewrite the loading system, because I wanted to keep using ffmpeg to view the first frame, instead of using matplotlib's imshow, since this would have too much overhead, and would require switching from using ffmpeg to preview, and using imshow, which would be different for video files and image files.  
+  * This version has rewritten the file loading process, and allows for multi-file-first-frame previews, and thus will also allow for gif order previews when you intend to make a gif from image files. I had to rewrite the loading system, because I wanted to keep using ffmpeg to view the first frame, instead of using matplotlib's imshow, since this would have too much overhead, and would require switching from using ffmpeg to preview, and using imshow, which would be different for video files and image files.  
   
 
   
