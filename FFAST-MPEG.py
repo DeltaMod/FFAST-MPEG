@@ -2,7 +2,7 @@
 """
 FFAST-MPEG - A quicker than usual way to make gifs, trim videos, split videos and so on!
 
-Current Version: pre-alpha v0.6  
+Current Version: Beta v1.0
 """
 from os import path,remove
 import sys
