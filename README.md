@@ -60,7 +60,9 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
         
         - Automatically importing volume control for multi-channel video, based on total number of channels available (to be incorporated into the automatic complex filter builder)
         
-        - Set video range using overlapped sliders that hide/show when you toggle "start" and "end" points. Alternatively, add an end slider that can be interacted with at the same time? Note that the operation for trimming would actually be: Trim from end, then trim the newly trimmed video from start. Otherwise, you can lose sound sync.
+        - Set video range using overlapped sliders that hide/show when you toggle "start" and "end" points. 
+          Alternatively, add an end slider that can be interacted with at the same time? Note that the operation for trimming would
+          actually be: Trim from end, then trim the newly trimmed video from start. Otherwise, you can lose sound sync.
         
         - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc) [Started]
         
