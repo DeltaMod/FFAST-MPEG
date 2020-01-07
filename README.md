@@ -52,21 +52,27 @@ You will need to install FFMPEG https://www.ffmpeg.org/download.html and add it 
  
         - Automatic Naming for Image Sequences  [Done?]
         
-        - Display first frame of each image/video imported instead of just from the first video/image when moving preview [DONE]
+        - Display first frame of each image/video imported instead of just from the first video/image when moving 
+          preview [DONE]
  
         - Automatically deleting original videos after performing an operation
         
         - Dynamically adding complex filters?    [Started]
         
-        - Automatically importing volume control for multi-channel video, based on total number of channels available (to be incorporated into the automatic complex filter builder)
+        - Automatically importing volume control for multi-channel video, based on total number of channels 
+          available (to be incorporated into the automatic complex filter builder)
         
         - Set video range using overlapped sliders that hide/show when you toggle "start" and "end" points. 
-          Alternatively, add an end slider that can be interacted with at the same time? Note that the operation for trimming would
-          actually be: Trim from end, then trim the newly trimmed video from start. Otherwise, you can lose sound sync.
+          Alternatively, add an end slider that can be interacted with at the same time? Note that the 
+          operation for trimming would actually be: Trim from end, then trim the newly trimmed video from
+          start. Otherwise, you can lose sound sync.
         
-        - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate, interpolation quality, etc) [Started]
+        - Adding gif conversion parameters when that option is selected (e.g. encoding quality, framerate,
+          interpolation quality, etc) [Started]
         
-        - Adding image sequence to gif/video parameters (like encoding quality, framerate, interpolation quality, etc. [Started]
+        - Adding image sequence to gif/video parameters (like encoding quality, framerate, interpolation 
+          quality, etc. [Started]
         
-        - Adding overwrite/rename/cancel options when an automatically generated name is matching one in the same directory [DONE]
+        - Adding overwrite/rename/cancel options when an automatically generated name is matching one in 
+          the same directory [DONE]
        
