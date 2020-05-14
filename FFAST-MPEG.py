@@ -177,6 +177,7 @@ class FFAST_MPEGUI(object):
         self.Var_Complex        = tk.BooleanVar(root); self.Var_Complex.set(False);
         self.Var_StatMode       = tk.StringVar(root);  self.Var_StatMode.set('diff')
         self.Var_PreserveAspect = tk.BooleanVar(root); self.Var_PreserveAspect.set(True);
+        self.Var_AutoGen        = tk.BooleanVar(root); self.Var_AutoGen.set(False)
          
          
          
@@ -374,12 +375,12 @@ class FFAST_MPEGUI(object):
                 self.Var_Format.set(self.VideoInfo['format-out'])
             elif VSAV['Output Type'] == 'Image':
                 self.VideoInfo['format-out'] = '.png'
-                self.Var_Format.set(self.VideoInfo['format-out'])
-                
-                
+                self.Var_Format.set(self.VideoInfo['format-out'])        
                 self.Print_Console('Output format = '+self.VideoInfo['format-out'],'VideoInfo')
+
         if self.VideosLoaded == 'None':
             self.VideoInfo = {'format-out':''}
+        
     def Select_Files(self):
         self.FirstFrameLoad = False   
         if self.VideosLoaded != 'None':
@@ -581,7 +582,6 @@ class FFAST_MPEGUI(object):
         #       self.VideoInfo[key][i] = 0
         
         self.Print_Console(self.VideoInfo,'VideoInfo')
-        print(self.VideoInfo)
         self.Convert_Button.config(state='normal')
         self.Edit_FileName.config(state='normal')
         self.Var_Outputname.set(self.VideoInfo['name'][0]+'-'+FOPN[self.FFSel.get()])
@@ -598,6 +598,8 @@ class FFAST_MPEGUI(object):
         self.Default_Height.config( text = self.VideoInfo['height'][0])
         self.Default_Format.config( text = self.VideoInfo['format-out'])
         
+        
+        
     def MaintainAspect(self,event):
         if AspectRatioMaintain == True:
             self.XDIM = int(root.winfo_width() - root.winfo_width() % 32)
@@ -606,6 +608,7 @@ class FFAST_MPEGUI(object):
 
     def Check_Filename_Available(self,*args):
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.Var_Outputname.get()+self.VideoInfo['format-out']) 
+        self.FF_Preset_Codegen()
         if self.FileExist == False and self.Var_Outputname.get() !='':
             self.Edit_FileName.config(bg='lightgreen')
         if self.FileExist == True:
@@ -615,9 +618,9 @@ class FFAST_MPEGUI(object):
             self.Convert_Button.config(state='disabled')
         
     def Rename_Or_Overwrite(self):
-        self.RunFinalCode = True
         self.OUTPUTNAME = tk.StringVar(root); self.OUTPUTNAME.set(self.Var_Outputname.get())
         self.OUTPUTNAME.trace_add('write',self.CheckNameAvailable)
+        self.FF_Preset_Codegen()
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-out'])
         self.Print_Console('File Exist = '+str(self.FileExist),'normal')
         if self.FileExist == True:
@@ -626,14 +629,13 @@ class FFAST_MPEGUI(object):
             self.QuestFrame.grab_set()
             self.NameEntry   = tk.Entry(self.QuestFrame,textvariable=self.OUTPUTNAME,bg='coral',width=(10+len(self.OUTPUTNAME.get())))
             self.NameEntry.grid(row=0,column=0,columnspan=3,sticky='nsew')
-            self.Overwrite   = tk.Button(self.QuestFrame,text='Overwrite',command=self.convert).grid(row=1,column=0,sticky='nsew',padx=5,pady=5)
+            self.Overwrite   = tk.Button(self.QuestFrame,text='Overwrite',command=self.RunFFMPEG).grid(row=1,column=0,sticky='nsew',padx=5,pady=5)
             self.NameChange  = tk.Button(self.QuestFrame,text='Use New Name',state='disabled',command=self.CheckIfConvert)
             self.NameChange.grid(row=1,column=1,sticky='nsew',padx=5,pady=5)
             self.Cancel      = tk.Button(self.QuestFrame,text='Cancel',command=self.PopupDestroy).grid(row=1,column=2,padx=5,pady=5,sticky='nsew')
           
         else:
-            self.FileExist = False
-            self.convert()
+            self.RunFFMPEG()
             
     def PopupDestroy(self): 
         try:
@@ -659,8 +661,7 @@ class FFAST_MPEGUI(object):
     def CheckIfConvert(self):
         self.FileExist = path.isfile( self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-in'])
         if self.FileExist == False:
-            self.RunFinalCode = True   
-            self.convert()
+            self.RunFFMPEG()
         
     def Toggle_Complex_Filter(self,*args):
         if self.Var_Complex.get() == True:
@@ -683,56 +684,60 @@ class FFAST_MPEGUI(object):
         """The GCD (greatest common divisor) is the highest number that evenly divides both width and height."""
         return a if b == 0 else self.gcd(b, a % b)
                 
-    def convert(self):
+    def FF_Preset_Codegen(self):
 
         self.PopupDestroy()
-        self.Var_Outputname.set(self.OUTPUTNAME.get())
-        self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+self.VideoInfo['format-in'][0]+'\"'
+        try:
+               self.Var_Outputname.set(self.OUTPUTNAME.get())
+        except AttributeError:
+               self.Var_Outputname.set('')
+
+        self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+self.VideoInfo['format-in'][0]+'\"'
         
         if self.FFSel.get() in [FOP[4],FOP[10]]:
-            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.gif'+'\"'
+            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'.gif'+'\"'
         if self.FFSel.get() in [FOP[6],FOP[9]]:
-            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'.mp4'+'\"'
+            self.OUTPUT =  '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'.mp4'+'\"'
         if len(self.file_paths) == 1:
             if self.FFSel.get() == FOP[0]: #Remove Video Footage Before Timetamp
-                FFASTCMD = ['ffmpeg -y -i',
+                self.FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-ss '+ self.Timestamp,
                             '-map 0 -vcodec copy -acodec copy',
                             self.OUTPUT]
-                FFASTMSG = ['Removing the footage before the timestamp']
-                REMOVELIST = None
+                self.FFASTMSG = ['Removing the footage before the timestamp']
+                self.REMOVELIST = None
             
             if self.FFSel.get() == FOP[1]: #Remove Video Footage After Timetamp
-                FFASTCMD = ['ffmpeg -y -i',
+                self.FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-ss '+ self.StartTime.get(),
                             '-map 0 -vcodec copy -acodec copy',
                             '-t '+ self.Timestamp,
                             self.OUTPUT]
-                FFASTMSG = ['Removing the footage after the timestamp']
-                REMOVELIST = None
+                self.FFASTMSG = ['Removing the footage after the timestamp']
+                self.REMOVELIST = None
             if self.FFSel.get() == FOP[2]: #Split Video at Timestamp
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-A'+self.VideoInfo['format-in'][0]+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+self.VideoInfo['name'][0]+'-B'+self.VideoInfo['format-in'][0]+'\"'
-                FFASTCMD = ['ffmpeg -y -i',
+                self.FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-t ' + self.Timestamp,
                             '-map 0 -c copy ' +OUTPUT1,
                             '-ss ' + self.Timestamp, 
                             '-map 0 -c copy ' +OUTPUT2]
-                FFASTMSG = ['Splitting the footage at the timestamp']
-                REMOVELIST = None
+                self.FFASTMSG = ['Splitting the footage at the timestamp']
+                self.REMOVELIST = None
             
             if self.FFSel.get() == FOP[3]: #Merge Multichannel Audio of Video
                 if self.VideoInfo['audio streams'][0] > 1:
-                    FFASTCMD = ['ffmpeg -y -i',
+                    self.FFASTCMD = ['ffmpeg -y -i',
                                 '\"'   + self.file_paths[0]  + '\"',
                                 '-filter_complex \"[0:a:1]volume=0.8[l];[0:a:0][l]amerge=inputs='+str(self.VideoInfo['audio streams'][0])+'[a]\"',
                                 '-map \"0:v:0\" -map \"[a]\" -c:v copy -c:a libmp3lame -q:a 3 -ac 2',
                                 self.OUTPUT]
-                    FFASTMSG = ['Merging Multichannel Audio']
-                    REMOVELIST = None
+                    self.FFASTMSG = ['Merging Multichannel Audio']
+                    self.REMOVELIST = None
                
                 else:
                     self.Print_Console('You only have one audio channel, ya numpty - I mean, uh, I did it - Audio channel has been merged','warning')
@@ -742,7 +747,7 @@ class FFAST_MPEGUI(object):
             if self.FFSel.get() == FOP[4]: #Convert Video to Gif
                 #This is a two step process - First, we generate a palette:
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"' 
-                FFASTCMD = ([    'ffmpeg -y -i',
+                self.FFASTCMD = ([    'ffmpeg -y -i',
                                 '\"'   + self.file_paths[0]  + '\"',
                                 '-filter_complex \"fps=15,scale=720:-1:flags=lanczos,palettegen=stats_mode=diff:reserve_transparent=1\"',
                                 OUTPUT1],
@@ -751,50 +756,50 @@ class FFAST_MPEGUI(object):
                                 '-i',OUTPUT1,'-filter_complex \"[0]fps=15,scale=720:-1:flags=lanczos,setsar=1[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle\"', 
                                 self.OUTPUT])
                 
-                FFASTMSG   = ['Palette is being generated',
+                self.FFASTMSG   = ['Palette is being generated',
                               'Gif is being generated']
-                REMOVELIST = [self.save_location[0]+'\\'+'Palette.png'] 
+                self.REMOVELIST = [self.save_location[0]+'\\'+'Palette.png'] 
                 
             if self.FFSel.get() == FOP[5]: #Convert Video to Image Sequence
-                FFASTCMD = ['ffmpeg -y -i',
+                self.FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
-                            '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
+                            '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'%04d.png'+'\"' ]
                 #'-vf \"select=eq(pict_type\,I)\" -vsync vfr',
-                FFASTMSG   = ['Generating Image Sequence']
-                REMOVELIST = None            
+                self.FFASTMSG   = ['Generating Image Sequence']
+                self.REMOVELIST = None            
             if self.FFSel.get() == FOP[6]: #Convert Gif to Video
-                FFASTCMD = ['ffmpeg -y -f gif -i',
+                self.FFASTCMD = ['ffmpeg -y -f gif -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             self.OUTPUT]
-                FFASTMSG   = ['Generating Video from Gif']
-                REMOVELIST = None
+                self.FFASTMSG   = ['Generating Video from Gif']
+                self.REMOVELIST = None
             
             if self.FFSel.get() == FOP[7]: #Convert Gif to Image Sequence
-                FFASTCMD = ['ffmpeg -y -i',
+                self.FFASTCMD = ['ffmpeg -y -i',
                             '\"'   + self.file_paths[0]  + '\"',
                             '-vsync 0',
-                            '\"'+self.save_location[0]+'\\'+self.OUTPUTNAME.get()+'%04d.png'+'\"' ]
-                FFASTMSG   = ['Converting Gif to Image Sequence']
-                REMOVELIST = None
+                            '\"'+self.save_location[0]+'\\'+self.Var_Outputname.get()+'%04d.png'+'\"' ]
+                self.FFASTMSG   = ['Converting Gif to Image Sequence']
+                self.REMOVELIST = None
         if len(self.file_paths) > 1:
             if self.FFSel.get() == FOP[8]: #Merge Videos
                 self.MergeList()
-                FFASTCMD = ['ffmpeg -y -f',
+                self.FFASTCMD = ['ffmpeg -y -f',
                             'concat -safe 0 -i',
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-c copy', 
                             self.OUTPUT]
-                FFASTMSG   = ['Merging Video From Mergelist']
-                REMOVELIST = [self.MListOUT]
+                self.FFASTMSG   = ['Merging Video From Mergelist']
+                self.REMOVELIST = [self.MListOUT]
      
             if self.FFSel.get() == FOP[9]: #Convert Image Sequence to Video
                 self.MergeList()
-                FFASTCMD = ['ffmpeg -y -f concat -safe 0 -i',
+                self.FFASTCMD = ['ffmpeg -y -f concat -safe 0 -i',
                             '\"'+self.MListOUT+'\"', #Note: Mergelist CANNOT use these kinds of speech marks \"\"
                             '-vcodec libx264 -b:v 800k', 
                             self.OUTPUT]
-                FFASTMSG   = ['Merging Video from Image Mergelist']
-                REMOVELIST = [self.MListOUT]
+                self.FFASTMSG   = ['Merging Video from Image Mergelist']
+                self.REMOVELIST = [self.MListOUT]
                 
             if self.FFSel.get() == FOP[10]: #Convert Image Sequence to Gif
                 self.MergeList()
@@ -802,7 +807,7 @@ class FFAST_MPEGUI(object):
                 OUTPUT1 = '\"'  + self.save_location[0]+'\\'+'Palettevid.mp4'+'\"' 
                 OUTPUT2 = '\"'  + self.save_location[0]+'\\'+'Palette.png'+'\"'  
                 #This is incredibly stupid, we have to generate a palette from a converted video - AND THEN generate the gif using said palette
-                FFASTCMD = (['ffmpeg -y -f concat -safe 0 -i',
+                self.FFASTCMD = (['ffmpeg -y -f concat -safe 0 -i',
                               '\"'+self.MListOUT+'\"',
                               '-vcodec libx264 -b:v 800k', 
                               OUTPUT1], #make palettevid
@@ -815,20 +820,34 @@ class FFAST_MPEGUI(object):
                               '-i',OUTPUT2,'-filter_complex \"[0]fps=24,setsar=1[x];[x][1:v]paletteuse\"', 
                               self.OUTPUT]) #use palette to make gif
                 
-                FFASTMSG   = ['Palette video is being generated',
+                self.FFASTMSG   = ['Palette video is being generated',
                               'Palette is being generated',
                               'Gif is being generated']
-                REMOVELIST = [self.save_location[0]+'\\'+'Palette.png',
+                self.REMOVELIST = [self.save_location[0]+'\\'+'Palette.png',
                               self.save_location[0]+'\\'+'Palettevideo.mp4',
                               self.MListOUT]
                 
-        if self.RunFinalCode == True:
-               print(FFASTCMD)
-               print(FFASTMSG)
-               self.RunFFMPEG(FFASTCMD,FFASTMSG,REMOVELIST)
-               self.RunFinalCode = False
-                
-    def RunFFMPEG(self,CMD,MSG,REMOVELIST):
+       
+        if type(self.FFASTCMD[0]) == list:
+                  Cmdmsg = []
+                  for txt in self.FFASTCMD:
+                         Cmdmsg.append(" ".join(txt)+'/n')
+        elif type(self.FFASTCMD[0]) == str:
+                  Cmdmsg = [" ".join(self.FFASTCMD)]
+        print(Cmdmsg)                 
+        self.FFCurrent.delete('1.0',tk.END)
+        self.FFCurrent.insert(tk.END," ".join(Cmdmsg))
+        
+    def RunFFMPEG(self):
+           if self.Var_AutoGen.get() == False:
+                  self.FF_Preset_Codegen()
+           elif self.Var_AutoGen.get() == True:
+                  None
+                  
+           CMD        = self.FFASTCMD
+           MSG        = self.FFASTMSG
+           REMOVELIST = self.REMOVELIST 
+                  
            if type(CMD[0]) == list:
                   Cmdmsg = []
                   for txt in CMD:
