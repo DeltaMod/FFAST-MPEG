@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['C:\\Users\\Vidar\\Dropbox\\Code Projects\\FFAST-MPEG\\FFAST-MPEG.py'],
-             pathex=['C:\\Users\\Vidar\\Dropbox\\Code Projects\\FFAST-MPEG'],
+             pathex=['C:\\Users\\Vidar'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True )
+          console=True , icon='C:\\Users\\Vidar\\Dropbox\\Code Projects\\FFAST-MPEG\\FFAST-MPEG-ICON.ico')
